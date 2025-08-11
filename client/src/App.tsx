@@ -11,6 +11,8 @@ import Employees from "@/pages/Employees";
 import Departments from "@/pages/Departments";
 import Positions from "@/pages/Positions";
 import Hierarchy from "@/pages/Hierarchy";
+import HierarchyLevels from "@/pages/HierarchyLevels";
+import Settings from "@/pages/Settings";
 import Forms from "@/pages/Forms";
 import Evaluations from "@/pages/Evaluations";
 import Login from "@/pages/Login";
@@ -48,6 +50,16 @@ function Router() {
       <Route path="/hierarchy">
         <ProtectedRoute>
           <Hierarchy />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/hierarchy-levels">
+        <ProtectedRoute>
+          <HierarchyLevels />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute>
+          <Settings />
         </ProtectedRoute>
       </Route>
       <Route path="/forms">

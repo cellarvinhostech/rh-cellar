@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Users, Building, Table, ClipboardList, Star, BarChart3, Menu, X, LogOut, User, Briefcase } from "lucide-react";
+import { Users, Building, Table, ClipboardList, Star, BarChart3, Menu, X, LogOut, User, Briefcase, Shield, Settings } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 const navigationItems = [
@@ -45,6 +45,18 @@ const navigationItems = [
     label: "Avaliações",
     icon: Star,
     path: "/evaluations"
+  },
+  {
+    id: "hierarchy-levels",
+    label: "Níveis",
+    icon: Shield,
+    path: "/hierarchy-levels"
+  },
+  {
+    id: "settings",
+    label: "Configurações",
+    icon: Settings,
+    path: "/settings"
   }
 ];
 
