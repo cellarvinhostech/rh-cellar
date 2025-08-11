@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0 0% 98%);
+  --foreground: hsl(222 84% 5%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222 84% 5%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222 84% 5%);
+  --primary: hsl(280 100% 70%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(270 3% 87%);
+  --secondary-foreground: hsl(220 9% 46%);
+  --muted: hsl(210 40% 98%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(310 87% 72%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(280 100% 70%);
+  --warning: hsl(42.9 87.1% 47.8%);
+  --warning-foreground: hsl(0 0% 100%);
+  --error: hsl(0 84.2% 60.2%);
+  --error-foreground: hsl(0 0% 100%);
+  --slate-50: hsl(210 40% 98%);
+  --slate-100: hsl(210 40% 96%);
+  --slate-200: hsl(214 32% 91%);
+  --slate-300: hsl(213 27% 84%);
+  --slate-400: hsl(215 20% 65%);
+  --slate-500: hsl(215 16% 47%);
+  --slate-600: hsl(215 19% 35%);
+  --slate-700: hsl(215 25% 27%);
+  --slate-800: hsl(217 33% 17%);
+  --slate-900: hsl(222 84% 5%);
+  --blue-100: hsl(219 100% 95%);
+  --blue-600: hsl(213.3 100% 56.3%);
+  --green-100: hsl(142 69% 93%);
+  --green-600: hsl(142.1 76.2% 36.3%);
+  --green-800: hsl(142.1 70.6% 25.2%);
+  --orange-100: hsl(42 100% 93%);
+  --orange-600: hsl(42.9 87.1% 47.8%);
+  --purple-100: hsl(280 91% 95%);
+  --purple-600: hsl(280 100% 70%);
+  --yellow-100: hsl(54 91% 95%);
+  --yellow-800: hsl(42.9 87.1% 35%);
+  --pink-gradient: linear-gradient(135deg, hsl(280 100% 70%), hsl(310 87% 72%));
+  --font-inter: 'Inter', sans-serif;
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: hsl(222 84% 5%);
+  --foreground: hsl(210 40% 98%);
+  --card: hsl(222 84% 5%);
+  --card-foreground: hsl(210 40% 98%);
+  --popover: hsl(222 84% 5%);
+  --popover-foreground: hsl(210 40% 98%);
+  --primary: hsl(213.3 100% 56.3%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(217 32.6% 17.5%);
+  --secondary-foreground: hsl(210 40% 98%);
+  --muted: hsl(217 32.6% 17.5%);
+  --muted-foreground: hsl(215 20.2% 65.1%);
+  --accent: hsl(217 32.6% 17.5%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(217 32.6% 17.5%);
+  --input: hsl(217 32.6% 17.5%);
+  --ring: hsl(213.3 100% 56.3%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply font-inter antialiased bg-background text-foreground;
+    font-family: var(--font-inter);
+  }
+}
+
+@layer components {
+  .nav-item {
+    @apply flex items-center space-x-3 px-3 py-2 text-slate-500 rounded-lg hover:bg-purple-50 transition-colors text-sm;
+  }
+  
+  .nav-item.active {
+    @apply bg-primary text-white hover:bg-purple-700 shadow-md;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all font-medium text-sm flex items-center shadow-md hover:shadow-lg;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm flex items-center border border-slate-200;
+  }
+  
+  .gradient-bg {
+    background: var(--pink-gradient);
+  }
+  
+  .chart-bar {
+    @apply rounded-t-lg transition-all duration-300 hover:opacity-80;
+  }
+  
+  .form-input {
+    @apply w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+  
+  .form-select {
+    @apply px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white;
+  }
+  
+  .form-textarea {
+    @apply w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-slate-700 mb-2;
+  }
+  
+  .form-group {
+    @apply space-y-2;
+  }
+}
