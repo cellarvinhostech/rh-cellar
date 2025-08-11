@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Users, Building, Table, ClipboardList, Star, BarChart3, Settings, Menu, ChevronLeft, LogOut, User } from "lucide-react";
-import { Tooltip } from "@/components/ui/Tooltip";
-import { useAuth } from "@/hooks/use-auth";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const navigationItems = [
   {
@@ -80,14 +80,19 @@ export function Sidebar() {
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md">
               <BarChart3 className="text-white w-6 h-6" />
             </div>
-            <Tooltip content="Expandir menu">
-              <button
-                onClick={() => setIsExpanded(true)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-purple-50 hover:text-primary transition-colors text-slate-400"
-                data-testid="expand-sidebar"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-purple-50 hover:text-primary transition-colors text-slate-400"
+                  data-testid="expand-sidebar"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Expandir menu</p>
+              </TooltipContent>
             </Tooltip>
           </div>
         )}
@@ -116,17 +121,22 @@ export function Sidebar() {
                       <span className="font-medium">{item.label}</span>
                     </span>
                   ) : (
-                    <Tooltip content={item.label} disabled={isExpanded}>
-                      <span 
-                        className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all cursor-pointer ${
-                          isActive 
-                            ? 'bg-primary text-white shadow-md' 
-                            : 'text-slate-400 hover:bg-purple-50 hover:text-primary'
-                        }`}
-                        data-testid={`nav-${item.id}`}
-                      >
-                        <Icon className="w-5 h-5" />
-                      </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span 
+                          className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all cursor-pointer ${
+                            isActive 
+                              ? 'bg-primary text-white shadow-md' 
+                              : 'text-slate-400 hover:bg-purple-50 hover:text-primary'
+                          }`}
+                          data-testid={`nav-${item.id}`}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        <p>{item.label}</p>
+                      </TooltipContent>
                     </Tooltip>
                   )}
                 </Link>
@@ -160,58 +170,83 @@ export function Sidebar() {
             </div>
             
             <div className="flex space-x-2">
-              <Tooltip content="Perfil">
-                <Link href="/profile">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/profile">
+                    <button className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+                      <User className="w-4 h-4" />
+                    </button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Perfil</p>
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <button className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
-                    <User className="w-4 h-4" />
+                    <Settings className="w-4 h-4" />
                   </button>
-                </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Configurações</p>
+                </TooltipContent>
               </Tooltip>
               
-              <Tooltip content="Configurações">
-                <button className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
-                  <Settings className="w-4 h-4" />
-                </button>
-              </Tooltip>
-              
-              <Tooltip content="Sair">
-                <button 
-                  onClick={() => {
-                    logout();
-                    navigate("/login");
-                  }}
-                  className="flex-1 text-slate-400 hover:text-red-600 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
-                  data-testid="logout-button"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    onClick={() => {
+                      logout();
+                      navigate("/login");
+                    }}
+                    className="flex-1 text-slate-400 hover:text-red-600 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
+                    data-testid="logout-button"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Sair</p>
+                </TooltipContent>
               </Tooltip>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center space-y-2">
-            <Tooltip content={`${authState.user?.name || "Usuário"} - ${authState.user?.role || "Colaborador"}`}>
-              <Link href="/profile">
-                <img 
-                  src={authState.user?.avatar || "https://pixabay.com/get/gadfaeda8f45dac1f50485b9f6697d3ce0712f46d6e1d863b67553e7660784f8c9f44e982174e664fa7ca6fc89ff1104b2ebff8e1df9df0aeb75e7993ce97e90b_1280.jpg"} 
-                  alt="Profile" 
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-100 cursor-pointer hover:ring-purple-200 transition-colors"
-                  data-testid="user-avatar"
-                />
-              </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/profile">
+                  <img 
+                    src={authState.user?.avatar || "https://pixabay.com/get/gadfaeda8f45dac1f50485b9f6697d3ce0712f46d6e1d863b67553e7660784f8c9f44e982174e664fa7ca6fc89ff1104b2ebff8e1df9df0aeb75e7993ce97e90b_1280.jpg"} 
+                    alt="Profile" 
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-100 cursor-pointer hover:ring-purple-200 transition-colors"
+                    data-testid="user-avatar"
+                  />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>{`${authState.user?.name || "Usuário"} - ${authState.user?.role || "Colaborador"}`}</p>
+              </TooltipContent>
             </Tooltip>
             
-            <Tooltip content="Sair">
-              <button 
-                onClick={() => {
-                  logout();
-                  navigate("/login");
-                }}
-                className="w-10 h-10 text-slate-400 hover:text-red-600 flex items-center justify-center rounded-xl hover:bg-red-50 transition-colors"
-                data-testid="logout-button-compact"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={() => {
+                    logout();
+                    navigate("/login");
+                  }}
+                  className="w-10 h-10 text-slate-400 hover:text-red-600 flex items-center justify-center rounded-xl hover:bg-red-50 transition-colors"
+                  data-testid="logout-button-compact"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Sair</p>
+              </TooltipContent>
             </Tooltip>
           </div>
         )}

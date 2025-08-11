@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { User, Mail, Phone, Building, Calendar, Clock, Camera, Lock, Save, X } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import type { UpdateProfileData, ChangePasswordData } from "@/types/auth";
 

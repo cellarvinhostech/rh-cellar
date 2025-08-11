@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect } from "react";
 import type { User, LoginCredentials, ResetPasswordRequest, UpdateProfileData, ChangePasswordData, AuthState } from "@/types/auth";
 
 // Mock user data
@@ -14,15 +14,6 @@ const mockUser: User = {
   joinDate: "2022-01-15",
   lastLogin: new Date().toISOString()
 };
-
-const AuthContext = createContext<{
-  authState: AuthState;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => void;
-  requestPasswordReset: (data: ResetPasswordRequest) => Promise<void>;
-  updateProfile: (data: UpdateProfileData) => Promise<void>;
-  changePassword: (data: ChangePasswordData) => Promise<void>;
-} | null>(null);
 
 export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({

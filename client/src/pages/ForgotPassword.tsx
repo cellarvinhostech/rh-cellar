@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Mail, ArrowLeft, BarChart3, CheckCircle } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import type { ResetPasswordRequest } from "@/types/auth";
 
