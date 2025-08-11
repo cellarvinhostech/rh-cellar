@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Users, Building, Table, ClipboardList, Star, BarChart3, Menu, X, LogOut, User } from "lucide-react";
+import { Users, Building, Table, ClipboardList, Star, BarChart3, Menu, X, LogOut, User, Briefcase } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 const navigationItems = [
@@ -21,6 +21,12 @@ const navigationItems = [
     label: "Departamentos",
     icon: Building,
     path: "/departments"
+  },
+  {
+    id: "positions",
+    label: "Cargos",
+    icon: Briefcase,
+    path: "/positions"
   },
   {
     id: "hierarchy",
