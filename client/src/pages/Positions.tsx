@@ -17,8 +17,8 @@ export default function Positions() {
   const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
-  const [selectedLevel, setSelectedLevel] = useState<string>("");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
+  const [selectedLevel, setSelectedLevel] = useState<string>("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
@@ -70,8 +70,8 @@ export default function Positions() {
   const filteredPositions = positions.filter(position => {
     const matchesSearch = position.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          getDepartmentName(position.departmentId).toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = !selectedDepartment || position.departmentId === selectedDepartment;
-    const matchesLevel = !selectedLevel || position.level === selectedLevel;
+    const matchesDepartment = !selectedDepartment || selectedDepartment === 'all' || position.departmentId === selectedDepartment;
+    const matchesLevel = !selectedLevel || selectedLevel === 'all' || position.level === selectedLevel;
     
     return matchesSearch && matchesDepartment && matchesLevel;
   });
@@ -165,12 +165,16 @@ export default function Positions() {
   };
 
   const clearFilters = () => {
-    setSelectedDepartment("");
-    setSelectedLevel("");
+    setSelectedDepartment("all");
+    setSelectedLevel("all");
     setSearchTerm("");
   };
 
-  const activeFiltersCount = [selectedDepartment, selectedLevel, searchTerm].filter(Boolean).length;
+  const activeFiltersCount = [
+    selectedDepartment !== "all" ? selectedDepartment : null,
+    selectedLevel !== "all" ? selectedLevel : null,
+    searchTerm
+  ].filter(Boolean).length;
 
   // Filters Component for reuse
   const FiltersContent = ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -182,7 +186,7 @@ export default function Positions() {
               <SelectValue placeholder="Todos os Departamentos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os Departamentos</SelectItem>
+              <SelectItem value="all">Todos os Departamentos</SelectItem>
               {departments.map((dept) => (
                 <SelectItem key={dept.id} value={dept.id}>
                   {dept.name}
@@ -198,7 +202,7 @@ export default function Positions() {
               <SelectValue placeholder="Todos os Níveis" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os Níveis</SelectItem>
+              <SelectItem value="all">Todos os Níveis</SelectItem>
               {levels.map((level) => (
                 <SelectItem key={level.value} value={level.value}>
                   {level.label}
