@@ -276,7 +276,7 @@ export default function Employees() {
         {/* Content Area - Split View */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Left Side - Employees List */}
-          <div className={`${selectedEmployee ? 'lg:w-1/2 h-1/2 lg:h-full' : 'w-full'} transition-all duration-300 overflow-auto ${selectedEmployee ? 'border-b lg:border-b-0 lg:border-r border-slate-200' : ''}`}>
+          <div className={`${selectedEmployee ? 'lg:w-1/2 h-1/4 lg:h-full' : 'w-full'} transition-all duration-300 overflow-auto ${selectedEmployee ? 'border-b lg:border-b-0 lg:border-r border-slate-200' : ''}`}>
             <div className="p-4 sm:p-6 pb-20 lg:pb-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">
                 Colaboradores ({filteredEmployees.length})
@@ -307,7 +307,7 @@ export default function Employees() {
 
           {/* Right Side - Employee Details */}
           {selectedEmployee && (
-            <div className="lg:w-1/2 h-1/2 lg:h-full bg-slate-50 border-t lg:border-t-0 relative">
+            <div className="lg:w-1/2 h-3/4 lg:h-full bg-slate-50 border-t lg:border-t-0 relative">
               <EmployeeDetailSidebar 
                 employee={selectedEmployee}
                 isOpen={isSidebarOpen}
