@@ -52,12 +52,17 @@ export function EmployeeDetailSidebar({ employee, isOpen, onClose }: EmployeeDet
   };
 
   return (
-    <div className="h-full w-full relative bg-white overflow-y-auto">
+    <div className="h-full w-full relative bg-white overflow-y-auto rounded-t-2xl lg:rounded-none">
       <div className="p-4 sm:p-6">
+        {/* Mobile drag handle */}
+        <div className="flex justify-center mb-3 lg:hidden">
+          <div className="w-12 h-1.5 bg-slate-300 rounded-full"></div>
+        </div>
+
         {/* Header - Mobile optimized */}
-        <div className="flex items-center justify-between mb-4 sticky top-0 bg-white z-10 pb-2">
+        <div className="flex items-center justify-between mb-4 sticky top-0 bg-white z-20 pb-2 border-b border-slate-100">
           <h2 className="text-lg sm:text-xl font-semibold text-slate-900">
-            Detalhes
+            Detalhes do Funcionário
           </h2>
           <Button
             variant="ghost"
@@ -71,7 +76,7 @@ export function EmployeeDetailSidebar({ employee, isOpen, onClose }: EmployeeDet
         </div>
 
         {/* Employee Info */}
-        <div className="space-y-4 pb-20 lg:pb-6">
+        <div className="space-y-4 pb-24 lg:pb-6">
           {/* Profile Section */}
           <div className="text-center">
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-3">

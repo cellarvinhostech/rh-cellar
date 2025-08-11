@@ -274,10 +274,9 @@ export default function Employees() {
         </div>
 
         {/* Content Area - Split View */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
           {/* Left Side - Employees List */}
-          <div className={`${selectedEmployee ? 'lg:w-1/2 lg:h-full' : 'w-full'} transition-all duration-300 overflow-auto ${selectedEmployee ? 'border-b lg:border-b-0 lg:border-r border-slate-200' : ''}`} 
-               style={{ height: selectedEmployee ? '25vh' : '100%' }}>
+          <div className={`${selectedEmployee ? 'lg:w-1/2' : 'w-full'} transition-all duration-300 overflow-auto ${selectedEmployee ? 'border-b lg:border-b-0 lg:border-r border-slate-200' : ''}`}>
             <div className="p-4 sm:p-6 pb-20 lg:pb-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">
                 Colaboradores ({filteredEmployees.length})
@@ -306,10 +305,10 @@ export default function Employees() {
             </div>
           </div>
 
-          {/* Right Side - Employee Details */}
+          {/* Employee Details Sidebar - Mobile overlay style */}
           {selectedEmployee && (
-            <div className="lg:w-1/2 lg:h-full bg-slate-50 border-t lg:border-t-0 relative"
-                 style={{ height: '75vh' }}>
+            <div className="fixed inset-x-0 bottom-0 bg-white border-t-2 border-purple-200 shadow-2xl z-50 lg:relative lg:w-1/2 lg:h-full lg:border-t-0 lg:border-l lg:shadow-none"
+                 style={{ height: '75vh', top: 'auto' }}>
               <EmployeeDetailSidebar 
                 employee={selectedEmployee}
                 isOpen={isSidebarOpen}
