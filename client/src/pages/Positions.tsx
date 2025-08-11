@@ -233,10 +233,19 @@ export default function Positions() {
 
   return (
     <MainLayout>
-      {/* Mobile Header with Search and Filter */}
-      <div className="lg:hidden space-y-3 mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="relative flex-1">
+      <div className="container mx-auto p-4 sm:p-6">
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Cargos</h1>
+          <p className="text-slate-600">
+            Gerencie cargos e níveis hierárquicos
+          </p>
+        </div>
+
+        {/* Mobile Header with Search and Filter */}
+        <div className="lg:hidden space-y-3 mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               type="search"
@@ -246,9 +255,9 @@ export default function Positions() {
               className="pl-10"
               data-testid="search-positions"
             />
-          </div>
-          
-          <Sheet open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+            </div>
+            
+            <Sheet open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
             <SheetTrigger asChild>
               <Button
                 variant="outline"
@@ -272,50 +281,50 @@ export default function Positions() {
                 <FiltersContent isMobile={true} />
               </div>
             </SheetContent>
-          </Sheet>
-          
-          <Button onClick={handleCreatePosition} className="shrink-0" data-testid="create-position">
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Desktop Header */}
-      <div className="hidden lg:block mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              type="search"
-              placeholder="Buscar cargos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-              data-testid="search-positions"
-            />
+            </Sheet>
+            
+            <Button onClick={handleCreatePosition} className="shrink-0" data-testid="create-position">
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
-          
-          <Button onClick={handleCreatePosition} data-testid="create-position">
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Cargo
-          </Button>
         </div>
 
-        <div className="mt-4">
-          <FiltersContent />
+        {/* Desktop Header */}
+        <div className="hidden lg:block mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="search"
+                placeholder="Buscar cargos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                data-testid="search-positions"
+              />
+            </div>
+            
+            <Button onClick={handleCreatePosition} data-testid="create-position">
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Cargo
+            </Button>
+          </div>
+
+          <div className="mt-4">
+            <FiltersContent />
+          </div>
         </div>
-      </div>
 
-      {/* Results Count */}
-      <div className="mb-4">
-        <p className="text-sm text-gray-600">
-          {filteredPositions.length} {filteredPositions.length === 1 ? 'cargo encontrado' : 'cargos encontrados'}
-        </p>
-      </div>
+        {/* Results Count */}
+        <div className="mb-6">
+          <p className="text-sm text-gray-600">
+            {filteredPositions.length} {filteredPositions.length === 1 ? 'cargo encontrado' : 'cargos encontrados'}
+          </p>
+        </div>
 
-      {/* Positions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-20 lg:pb-6">
-        {filteredPositions.map((position) => (
+        {/* Positions Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-20 lg:pb-6">
+          {filteredPositions.map((position) => (
           <Card key={position.id} className="p-4 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1 min-w-0">
@@ -520,6 +529,7 @@ export default function Positions() {
           </form>
         </DialogContent>
       </Dialog>
+      </div>
     </MainLayout>
   );
 }
