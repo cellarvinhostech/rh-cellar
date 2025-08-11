@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Users, Building, Table, ClipboardList, Star, BarChart3, Settings, Menu, ChevronLeft, LogOut, User } from "lucide-react";
+import { Users, Building, Table, ClipboardList, Star, BarChart3, Settings, Menu, ChevronLeft, LogOut, User, Briefcase } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -22,6 +22,12 @@ const navigationItems = [
     label: "Departamentos",
     icon: Building,
     path: "/departments"
+  },
+  {
+    id: "positions",
+    label: "Cargos",
+    icon: Briefcase,
+    path: "/positions"
   },
   {
     id: "hierarchy",

@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Employees from "@/pages/Employees";
 import Departments from "@/pages/Departments";
+import Positions from "@/pages/Positions";
 import Hierarchy from "@/pages/Hierarchy";
 import Forms from "@/pages/Forms";
 import Evaluations from "@/pages/Evaluations";
@@ -37,6 +38,11 @@ function Router() {
       <Route path="/departments">
         <ProtectedRoute>
           <Departments />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/positions">
+        <ProtectedRoute>
+          <Positions />
         </ProtectedRoute>
       </Route>
       <Route path="/hierarchy">

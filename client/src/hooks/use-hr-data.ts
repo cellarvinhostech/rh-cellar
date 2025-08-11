@@ -95,26 +95,6 @@ export function useHRData() {
     setDepartments(prev => prev.filter(dept => dept.id !== id));
   }, []);
 
-  // Position operations
-  const createPosition = useCallback((data: InsertPosition) => {
-    const newPosition: Position = {
-      ...data,
-      id: generateId("pos")
-    };
-    setPositions(prev => [...prev, newPosition]);
-    return newPosition;
-  }, [generateId]);
-
-  const updatePosition = useCallback((id: string, data: Partial<Position>) => {
-    setPositions(prev => prev.map(pos => 
-      pos.id === id ? { ...pos, ...data } : pos
-    ));
-  }, []);
-
-  const deletePosition = useCallback((id: string) => {
-    setPositions(prev => prev.filter(pos => pos.id !== id));
-  }, []);
-
   // Employee operations
   const createEmployee = useCallback((data: InsertEmployee) => {
     const newEmployee: Employee = {
@@ -262,6 +242,26 @@ export function useHRData() {
       }));
     }
   }, [evaluations]);
+
+  // Position operations
+  const createPosition = useCallback((data: InsertPosition) => {
+    const newPosition: Position = {
+      ...data,
+      id: generateId("pos")
+    };
+    setPositions(prev => [...prev, newPosition]);
+    return newPosition;
+  }, [generateId]);
+
+  const updatePosition = useCallback((id: string, data: Partial<Position>) => {
+    setPositions(prev => prev.map(pos => 
+      pos.id === id ? { ...pos, ...data } : pos
+    ));
+  }, []);
+
+  const deletePosition = useCallback((id: string) => {
+    setPositions(prev => prev.filter(pos => pos.id !== id));
+  }, []);
 
   return {
     // Data
