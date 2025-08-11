@@ -47,8 +47,8 @@ export default function Employees() {
   const { getEmployeesWithDetails, departments, positions } = useHRData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("");
-  const [selectedPosition, setSelectedPosition] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
+  const [selectedPosition, setSelectedPosition] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithDetails | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -59,8 +59,8 @@ export default function Employees() {
   const filteredEmployees = employees.filter((employee) => {
     const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = !selectedDepartment || employee.departmentId === selectedDepartment;
-    const matchesPosition = !selectedPosition || employee.position.level === selectedPosition;
+    const matchesDepartment = !selectedDepartment || selectedDepartment === 'all' || employee.departmentId === selectedDepartment;
+    const matchesPosition = !selectedPosition || selectedPosition === 'all' || employee.position.level === selectedPosition;
     
     return matchesSearch && matchesDepartment && matchesPosition;
   });
@@ -93,12 +93,16 @@ export default function Employees() {
   };
 
   const clearFilters = () => {
-    setSelectedDepartment("");
-    setSelectedPosition("");
+    setSelectedDepartment("all");
+    setSelectedPosition("all");
     setSearchTerm("");
   };
 
-  const activeFiltersCount = [selectedDepartment, selectedPosition, searchTerm].filter(Boolean).length;
+  const activeFiltersCount = [
+    selectedDepartment !== "all" ? selectedDepartment : null,
+    selectedPosition !== "all" ? selectedPosition : null,
+    searchTerm
+  ].filter(Boolean).length;
 
   // Filters Component for reuse
   const FiltersContent = ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -114,7 +118,7 @@ export default function Employees() {
               position: employee.position.title,
               status: employee.status,
               hireDate: employee.hireDate,
-              salary: employee.salary
+              salary: employee.salary || 0
             }))}
             filename="Funcionários"
             className="w-full"
@@ -127,7 +131,7 @@ export default function Employees() {
               <SelectValue placeholder="Todos os Departamentos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os Departamentos</SelectItem>
+              <SelectItem value="all">Todos os Departamentos</SelectItem>
               {departments.map((dept) => (
                 <SelectItem key={dept.id} value={dept.id}>
                   {dept.name}
@@ -143,7 +147,7 @@ export default function Employees() {
               <SelectValue placeholder="Todos os Cargos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os Cargos</SelectItem>
+              <SelectItem value="all">Todos os Cargos</SelectItem>
               <SelectItem value="junior">Júnior</SelectItem>
               <SelectItem value="pleno">Pleno</SelectItem>
               <SelectItem value="senior">Sênior</SelectItem>
@@ -292,7 +296,7 @@ export default function Employees() {
                     <EmployeeCard 
                       key={employee.id}
                       employee={employee}
-                      onClick={() => handleViewEmployee(employee.id)}
+                      onView={() => handleViewEmployee(employee.id)}
                       onEdit={() => handleEditEmployee(employee.id)}
                     />
                   ))}
@@ -307,7 +311,6 @@ export default function Employees() {
               <EmployeeDetailSidebar 
                 employee={selectedEmployee}
                 onClose={handleCloseSidebar}
-                onEdit={() => handleEditEmployee(selectedEmployee.id)}
               />
             </div>
           )}
