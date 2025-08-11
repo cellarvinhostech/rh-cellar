@@ -92,90 +92,92 @@ export default function Forms() {
     <MainLayout>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4">
-          <div className="flex items-center justify-between">
+        <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900" data-testid="forms-title">
+              <h2 className="text-xl sm:text-2xl font-semibold text-slate-900" data-testid="forms-title">
                 Formulários de Avaliação
               </h2>
-              <p className="text-slate-600">Crie e gerencie formulários personalizados</p>
+              <p className="text-slate-600 text-sm sm:text-base">Crie e gerencie formulários personalizados</p>
             </div>
             <button 
-              className="btn-primary" 
+              className="btn-primary text-sm sm:text-base w-full sm:w-auto" 
               onClick={handleCreateForm}
               data-testid="create-form-button"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Novo Formulário
+              <span className="hidden sm:inline">Novo Formulário</span>
+              <span className="sm:hidden">Novo</span>
             </button>
           </div>
         </header>
 
         {/* Form Builder Content */}
-        <div className="flex-1 overflow-hidden">
-          <div className="grid grid-cols-12 h-full">
-            {/* Form List */}
-            <div className="col-span-4 bg-white border-r border-slate-200 overflow-auto">
-              <div className="p-4 border-b border-slate-200">
-                <h3 className="font-semibold text-slate-900">Formulários Existentes</h3>
-              </div>
-              <div className="p-4 space-y-3">
-                {evaluationForms.length === 0 ? (
-                  <div className="text-center py-8" data-testid="no-forms-message">
-                    <p className="text-slate-500">Nenhum formulário criado ainda.</p>
-                    <p className="text-sm text-slate-400">Clique em "Novo Formulário" para começar.</p>
-                  </div>
-                ) : (
-                  evaluationForms.map((form) => (
-                    <div 
-                      key={form.id}
-                      className={`p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 ${
-                        selectedForm?.id === form.id ? 'border-blue-500 bg-blue-50' : ''
-                      }`}
-                      onClick={() => handleSelectForm(form)}
-                      data-testid={`form-item-${form.id}`}
-                    >
-                      <h4 
-                        className="font-medium text-slate-900"
-                        data-testid={`form-name-${form.id}`}
-                      >
-                        {form.name}
-                      </h4>
-                      <p 
-                        className="text-sm text-slate-600"
-                        data-testid={`form-description-${form.id}`}
-                      >
-                        {form.description}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span 
-                          className="text-xs text-slate-500"
-                          data-testid={`form-date-${form.id}`}
-                        >
-                          Criado em {formatDate(form.createdDate)}
-                        </span>
-                        <span 
-                          className={`px-2 py-1 text-xs rounded-full ${getStatusColor(form.status)}`}
-                          data-testid={`form-status-${form.id}`}
-                        >
-                          {getStatusLabel(form.status)}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          {/* Form List - Mobile: Full height, Desktop: Left side */}
+          <div className={`${selectedForm ? 'hidden lg:block lg:w-1/3' : 'flex-1'} bg-white lg:border-r border-slate-200 overflow-auto`}>
+            <div className="p-4 sm:p-6 border-b border-slate-200">
+              <h3 className="font-semibold text-slate-900">Formulários Existentes</h3>
             </div>
+            <div className="p-4 sm:p-6 space-y-3">
+              {evaluationForms.length === 0 ? (
+                <div className="text-center py-8" data-testid="no-forms-message">
+                  <p className="text-slate-500">Nenhum formulário criado ainda.</p>
+                  <p className="text-sm text-slate-400">Clique em "Novo Formulário" para começar.</p>
+                </div>
+              ) : (
+                evaluationForms.map((form) => (
+                  <div 
+                    key={form.id}
+                    className={`p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors ${
+                      selectedForm?.id === form.id ? 'border-primary bg-purple-50' : ''
+                    }`}
+                    onClick={() => handleSelectForm(form)}
+                    data-testid={`form-item-${form.id}`}
+                  >
+                    <h4 
+                      className="font-medium text-slate-900"
+                      data-testid={`form-name-${form.id}`}
+                    >
+                      {form.name}
+                    </h4>
+                    <p 
+                      className="text-sm text-slate-600 line-clamp-2"
+                      data-testid={`form-description-${form.id}`}
+                    >
+                      {form.description}
+                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span 
+                        className="text-xs text-slate-500"
+                        data-testid={`form-date-${form.id}`}
+                      >
+                        Criado em {formatDate(form.createdDate)}
+                      </span>
+                      <span 
+                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(form.status)}`}
+                        data-testid={`form-status-${form.id}`}
+                      >
+                        {getStatusLabel(form.status)}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
 
-            {/* Form Editor */}
-            <div className="col-span-8 flex flex-col">
+          {/* Form Editor - Mobile: Full height when form selected, Desktop: Right side */}
+          {(selectedForm !== null) && (
+            <div className="flex-1 lg:w-2/3 flex flex-col relative">
               <FormBuilder
                 form={selectedForm || undefined}
                 onSave={handleSaveForm}
                 onPreview={handlePreviewForm}
+                onClose={() => setSelectedForm(null)}
               />
             </div>
-          </div>
+          )}
         </div>
 
         {/* Preview Modal */}

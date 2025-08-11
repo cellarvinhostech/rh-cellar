@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Eye, Save, Type, AlignLeft, List, Star, CheckSquare, Layers } from "lucide-react";
+import { Plus, Eye, Save, Type, AlignLeft, List, Star, CheckSquare, Layers, ArrowLeft, X } from "lucide-react";
 import { FormComponent } from "./FormComponent";
 import type { FormField, EvaluationForm } from "@/types/hr";
 
@@ -7,6 +7,7 @@ interface FormBuilderProps {
   form?: EvaluationForm;
   onSave: (form: Partial<EvaluationForm>) => void;
   onPreview: (form: Partial<EvaluationForm>) => void;
+  onClose?: () => void;
 }
 
 const componentTypes = [
@@ -18,7 +19,7 @@ const componentTypes = [
   { type: "section", label: "Seção", icon: Layers }
 ] as const;
 
-export function FormBuilder({ form, onSave, onPreview }: FormBuilderProps) {
+export function FormBuilder({ form, onSave, onPreview, onClose }: FormBuilderProps) {
   const [formData, setFormData] = useState<Partial<EvaluationForm>>({
     name: form?.name || "",
     description: form?.description || "",
@@ -72,34 +73,46 @@ export function FormBuilder({ form, onSave, onPreview }: FormBuilderProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Editor Header */}
-      <div className="p-6 border-b border-slate-200 bg-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Editor de Formulário</h3>
-            <p className="text-slate-600">Arraste componentes para construir seu formulário</p>
+      <div className="p-4 sm:p-6 border-b border-slate-200 bg-white">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            {/* Back Button - Mobile Only */}
+            {onClose && (
+              <button 
+                onClick={onClose}
+                className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                data-testid="back-to-forms-button"
+              >
+                <ArrowLeft className="w-5 h-5 text-slate-600" />
+              </button>
+            )}
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Editor de Formulário</h3>
+              <p className="text-slate-600 text-sm">Arraste componentes para construir seu formulário</p>
+            </div>
           </div>
           <div className="flex space-x-2">
             <button 
-              className="btn-secondary" 
+              className="btn-secondary text-sm" 
               onClick={handlePreview}
               data-testid="preview-form-button"
             >
               <Eye className="w-4 h-4 mr-2" />
-              Visualizar
+              <span className="hidden sm:inline">Visualizar</span>
             </button>
             <button 
-              className="btn-primary" 
+              className="btn-primary text-sm" 
               onClick={handleSave}
               data-testid="save-form-button"
             >
               <Save className="w-4 h-4 mr-2" />
-              Salvar
+              <span className="hidden sm:inline">Salvar</span>
             </button>
           </div>
         </div>
 
         {/* Form Basic Info */}
-        <div className="mt-4 grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="form-label">Nome do Formulário</label>
             <input
@@ -126,17 +139,17 @@ export function FormBuilder({ form, onSave, onPreview }: FormBuilderProps) {
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <div className="grid grid-cols-12 h-full">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 h-full">
           {/* Component Palette */}
-          <div className="col-span-3 bg-slate-50 border-r border-slate-200 p-4 overflow-auto">
+          <div className="lg:col-span-3 bg-slate-50 border-b lg:border-b-0 lg:border-r border-slate-200 p-4 overflow-auto">
             <h4 className="font-medium text-slate-900 mb-4">Componentes</h4>
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:space-y-2 lg:gap-0">
               {componentTypes.map((component) => {
                 const Icon = component.icon;
                 return (
                   <div
                     key={component.type}
-                    className="p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:shadow-sm"
+                    className="p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:shadow-sm transition-shadow"
                     onClick={() => addField(component.type)}
                     data-testid={`add-component-${component.type}`}
                   >
@@ -149,31 +162,31 @@ export function FormBuilder({ form, onSave, onPreview }: FormBuilderProps) {
           </div>
 
           {/* Form Canvas */}
-          <div className="col-span-9 flex">
+          <div className="flex-1 lg:col-span-9 flex flex-col lg:flex-row">
             {/* Canvas */}
-            <div className="flex-1 p-6 overflow-auto">
-              <div className="bg-white min-h-full border border-slate-200 rounded-lg p-6" data-testid="form-canvas">
+            <div className="flex-1 p-4 sm:p-6 overflow-auto">
+              <div className="bg-white min-h-full border border-slate-200 rounded-lg p-4 sm:p-6" data-testid="form-canvas">
                 {formData.fields?.length === 0 ? (
                   <div className="text-center py-12 text-slate-400" data-testid="empty-canvas">
                     <Plus className="w-12 h-12 mx-auto mb-4" />
-                    <p>Clique em um componente da paleta para começar a construir seu formulário</p>
+                    <p className="text-sm sm:text-base">Clique em um componente da paleta para começar a construir seu formulário</p>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     <div className="border-b border-slate-200 pb-4">
-                      <h2 className="text-xl font-semibold text-slate-900">
+                      <h2 className="text-lg sm:text-xl font-semibold text-slate-900">
                         {formData.name || "Formulário sem título"}
                       </h2>
                       {formData.description && (
-                        <p className="text-slate-600">{formData.description}</p>
+                        <p className="text-slate-600 text-sm sm:text-base">{formData.description}</p>
                       )}
                     </div>
 
                     {formData.fields?.map((field, index) => (
                       <div
                         key={field.id}
-                        className={`group relative p-4 border border-transparent rounded-lg hover:border-blue-300 cursor-pointer ${
-                          selectedField?.id === field.id ? 'border-blue-500 bg-blue-50' : ''
+                        className={`group relative p-3 sm:p-4 border border-transparent rounded-lg hover:border-primary cursor-pointer transition-colors ${
+                          selectedField?.id === field.id ? 'border-primary bg-purple-50' : 'hover:bg-slate-50'
                         }`}
                         onClick={() => setSelectedField(field)}
                         data-testid={`form-field-${field.id}`}
@@ -182,7 +195,7 @@ export function FormBuilder({ form, onSave, onPreview }: FormBuilderProps) {
                         
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
-                            className="text-xs bg-red-500 text-white px-2 py-1 rounded"
+                            className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               removeField(field.id);
@@ -199,64 +212,133 @@ export function FormBuilder({ form, onSave, onPreview }: FormBuilderProps) {
               </div>
             </div>
 
-            {/* Field Properties Panel */}
+            {/* Field Properties Panel - Mobile: Bottom drawer, Desktop: Side panel */}
             {selectedField && (
-              <div className="w-80 bg-slate-50 border-l border-slate-200 p-4 overflow-auto">
-                <h4 className="font-medium text-slate-900 mb-4">Propriedades do Campo</h4>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="form-label">Rótulo</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={selectedField.label}
-                      onChange={(e) => updateField(selectedField.id, { label: e.target.value })}
-                      data-testid="field-label-input"
-                    />
+              <>
+                {/* Mobile: Fixed bottom drawer */}
+                <div className="lg:hidden fixed bottom-18 left-0 right-0 bg-white border-t border-slate-200 p-4 z-40 max-h-64 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium text-slate-900">Propriedades do Campo</h4>
+                    <button
+                      onClick={() => setSelectedField(null)}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
                   </div>
-
-                  {(selectedField.type === "text" || selectedField.type === "textarea") && (
+                  
+                  <div className="space-y-3">
                     <div>
-                      <label className="form-label">Placeholder</label>
+                      <label className="form-label text-sm">Rótulo</label>
+                      <input
+                        type="text"
+                        className="form-input text-sm"
+                        value={selectedField.label}
+                        onChange={(e) => updateField(selectedField.id, { label: e.target.value })}
+                        data-testid="field-label-input"
+                      />
+                    </div>
+
+                    {(selectedField.type === "text" || selectedField.type === "textarea") && (
+                      <div>
+                        <label className="form-label text-sm">Placeholder</label>
+                        <input
+                          type="text"
+                          className="form-input text-sm"
+                          value={selectedField.placeholder || ""}
+                          onChange={(e) => updateField(selectedField.id, { placeholder: e.target.value })}
+                          data-testid="field-placeholder-input"
+                        />
+                      </div>
+                    )}
+
+                    {selectedField.type === "select" && (
+                      <div>
+                        <label className="form-label text-sm">Opções (uma por linha)</label>
+                        <textarea
+                          className="form-textarea text-sm"
+                          rows={3}
+                          value={selectedField.options?.join('\n') || ""}
+                          onChange={(e) => updateField(selectedField.id, { 
+                            options: e.target.value.split('\n').filter(opt => opt.trim()) 
+                          })}
+                          data-testid="field-options-input"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedField.required}
+                          onChange={(e) => updateField(selectedField.id, { required: e.target.checked })}
+                          data-testid="field-required-checkbox"
+                        />
+                        <span>Campo obrigatório</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop: Side panel */}
+                <div className="hidden lg:block w-80 bg-slate-50 border-l border-slate-200 p-4 overflow-auto">
+                  <h4 className="font-medium text-slate-900 mb-4">Propriedades do Campo</h4>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="form-label">Rótulo</label>
                       <input
                         type="text"
                         className="form-input"
-                        value={selectedField.placeholder || ""}
-                        onChange={(e) => updateField(selectedField.id, { placeholder: e.target.value })}
-                        data-testid="field-placeholder-input"
+                        value={selectedField.label}
+                        onChange={(e) => updateField(selectedField.id, { label: e.target.value })}
+                        data-testid="field-label-input"
                       />
                     </div>
-                  )}
 
-                  {selectedField.type === "select" && (
+                    {(selectedField.type === "text" || selectedField.type === "textarea") && (
+                      <div>
+                        <label className="form-label">Placeholder</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={selectedField.placeholder || ""}
+                          onChange={(e) => updateField(selectedField.id, { placeholder: e.target.value })}
+                          data-testid="field-placeholder-input"
+                        />
+                      </div>
+                    )}
+
+                    {selectedField.type === "select" && (
+                      <div>
+                        <label className="form-label">Opções (uma por linha)</label>
+                        <textarea
+                          className="form-textarea"
+                          rows={4}
+                          value={selectedField.options?.join('\n') || ""}
+                          onChange={(e) => updateField(selectedField.id, { 
+                            options: e.target.value.split('\n').filter(opt => opt.trim()) 
+                          })}
+                          data-testid="field-options-input"
+                        />
+                      </div>
+                    )}
+
                     <div>
-                      <label className="form-label">Opções (uma por linha)</label>
-                      <textarea
-                        className="form-textarea"
-                        rows={4}
-                        value={selectedField.options?.join('\n') || ""}
-                        onChange={(e) => updateField(selectedField.id, { 
-                          options: e.target.value.split('\n').filter(opt => opt.trim()) 
-                        })}
-                        data-testid="field-options-input"
-                      />
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedField.required}
+                          onChange={(e) => updateField(selectedField.id, { required: e.target.checked })}
+                          data-testid="field-required-checkbox"
+                        />
+                        <span>Campo obrigatório</span>
+                      </label>
                     </div>
-                  )}
-
-                  <div>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedField.required}
-                        onChange={(e) => updateField(selectedField.id, { required: e.target.checked })}
-                        data-testid="field-required-checkbox"
-                      />
-                      <span>Campo obrigatório</span>
-                    </label>
                   </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
