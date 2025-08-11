@@ -118,7 +118,7 @@ export default function Employees() {
               position: employee.position.title,
               status: employee.status,
               hireDate: employee.hireDate,
-              salary: employee.salary || 0
+              salary: employee.salary
             }))}
             filename="Funcionários"
             className="w-full"
@@ -310,6 +310,7 @@ export default function Employees() {
             <div className="lg:w-1/2 h-1/2 lg:h-full bg-slate-50 border-t lg:border-t-0 relative">
               <EmployeeDetailSidebar 
                 employee={selectedEmployee}
+                isOpen={isSidebarOpen}
                 onClose={handleCloseSidebar}
               />
             </div>
