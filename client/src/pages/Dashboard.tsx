@@ -1,13 +1,32 @@
-import { Users, Clock, CheckCircle, Building, Plus, Star, BarChart, UserPlus, Sparkles, Target } from "lucide-react";
+import { Users, Clock, CheckCircle, Building, Plus, Star, BarChart, UserPlus, Sparkles, Target, FileDown } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { EvaluationChart } from "@/components/analytics/EvaluationChart";
 import { AnalyticsCard } from "@/components/analytics/AnalyticsCard";
 import { useHRData } from "@/hooks/use-hr-data";
+import { exportDashboardToPDF } from "@/utils/exportUtils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const { stats, activities, departments, getEmployeesWithDetails } = useHRData();
+  const { toast } = useToast();
   
   const employees = getEmployeesWithDetails();
+
+  const handleExportDashboard = () => {
+    try {
+      exportDashboardToPDF(stats, activities);
+      toast({
+        title: "Exportação concluída",
+        description: "Relatório do dashboard baixado com sucesso",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro na exportação",
+        description: "Não foi possível gerar o arquivo PDF",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Sample chart data based on the design reference
   const evaluationChartData = [
@@ -73,16 +92,29 @@ export default function Dashboard() {
         {/* Header */}
         <header className="bg-white px-4 sm:px-6 py-4 sm:py-6">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <BarChart className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <BarChart className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-900" data-testid="dashboard-title">
+                    Analytics de avaliações
+                  </h1>
+                  <p className="text-slate-600 text-sm sm:text-base">Analise mais de uma avaliação ao mesmo tempo e veja pelo histórico o sucesso de iniciativas</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900" data-testid="dashboard-title">
-                  Analytics de avaliações
-                </h1>
-                <p className="text-slate-600 text-sm sm:text-base">Analise mais de uma avaliação ao mesmo tempo e veja pelo histórico o sucesso de iniciativas</p>
-              </div>
+              
+              {/* Export Button */}
+              <button
+                onClick={handleExportDashboard}
+                className="btn-secondary text-sm flex items-center space-x-2"
+                data-testid="export-dashboard-button"
+              >
+                <FileDown className="w-4 h-4" />
+                <span className="hidden sm:inline">Exportar PDF</span>
+                <span className="sm:hidden">PDF</span>
+              </button>
             </div>
           </div>
         </header>

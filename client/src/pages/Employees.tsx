@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Search, Users, User, Mail, Phone, MapPin, Star, X } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { EmployeeCard } from "@/components/employees/EmployeeCard";
 import { EmployeeDetailSidebar } from "@/components/employees/EmployeeDetailSidebar";
 import { useHRData } from "@/hooks/use-hr-data";
 import { useToast } from "@/hooks/use-toast";
+import { ExportButtons } from "@/components/common/ExportButtons";
+import { ExportData } from "@/utils/exportUtils";
 interface EmployeeWithDetails {
   id: string;
   name: string;
@@ -124,6 +126,20 @@ export default function Employees() {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+              <ExportButtons 
+                data={employees.map((employee): ExportData => ({
+                  id: employee.id,
+                  name: employee.name,
+                  email: employee.email,
+                  department: employee.department?.name || 'Não informado',
+                  position: employee.position.title,
+                  status: employee.status,
+                  hireDate: employee.hireDate,
+                  salary: employee.salary
+                }))}
+                filename="Funcionários"
+                className="flex-shrink-0"
+              />
               <select 
                 className="form-select min-w-0 sm:min-w-[180px]"
                 value={selectedDepartment}
@@ -220,7 +236,7 @@ export default function Employees() {
               <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={handleCloseSidebar} />
               
               {/* Details Panel */}
-              <div className="fixed inset-x-0 bottom-18 top-1/4 lg:relative lg:inset-auto lg:w-1/2 lg:h-full overflow-auto bg-white lg:bg-slate-50 z-50 lg:z-auto rounded-t-xl lg:rounded-none p-4 sm:p-6">
+              <div className="fixed inset-x-0 bottom-0 top-1/4 lg:relative lg:inset-auto lg:w-1/2 lg:h-full overflow-auto bg-white lg:bg-slate-50 z-50 lg:z-auto rounded-t-xl lg:rounded-none p-4 sm:p-6 pb-20 lg:pb-6">
                 <div className="lg:bg-white lg:rounded-lg lg:shadow-sm lg:border lg:border-slate-200 lg:p-6">
                   {/* Mobile Handle */}
                   <div className="lg:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto mb-4" />
