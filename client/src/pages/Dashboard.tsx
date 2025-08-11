@@ -71,17 +71,17 @@ export default function Dashboard() {
     <MainLayout>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <header className="bg-white px-6 py-6">
+        <header className="bg-white px-4 sm:px-6 py-4 sm:py-6">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center space-x-4 mb-4">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <BarChart className="w-6 h-6 text-purple-600" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <BarChart className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900" data-testid="dashboard-title">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900" data-testid="dashboard-title">
                   Analytics de avaliações
                 </h1>
-                <p className="text-slate-600">Analise mais de uma avaliação ao mesmo tempo e veja pelo histórico o sucesso de iniciativas</p>
+                <p className="text-slate-600 text-sm sm:text-base">Analise mais de uma avaliação ao mesmo tempo e veja pelo histórico o sucesso de iniciativas</p>
               </div>
             </div>
           </div>
@@ -89,10 +89,10 @@ export default function Dashboard() {
 
         {/* Dashboard Content */}
         <div className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
             
             {/* Analytics Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
               <AnalyticsCard
                 title="Avaliação de Desempenho"
                 description="Analise mais de uma avaliação ao mesmo tempo e veja pelo histórico o sucesso de iniciativas, a evolução de pessoas, departamentos e a empresa como um todo."
@@ -111,25 +111,25 @@ export default function Dashboard() {
             </div>
 
             {/* Analytics Section */}
-            <div className="mb-8">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                <div className="flex items-center justify-between mb-6">
+            <div className="mb-6 sm:mb-8">
+              <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-100">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
                   <div>
-                    <h2 className="text-xl font-semibold text-slate-900">Avaliações</h2>
-                    <p className="text-slate-500">Analytics de avaliações</p>
+                    <h2 className="text-lg sm:text-xl font-semibold text-slate-900">Avaliações</h2>
+                    <p className="text-slate-500 text-sm sm:text-base">Analytics de avaliações</p>
                   </div>
                   
-                  <div className="flex space-x-4">
-                    <select className="px-4 py-2 border border-slate-200 rounded-lg text-sm">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+                    <select className="px-3 sm:px-4 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm">
                       <option>Avaliação de Competências e Potencial 2024</option>
                     </select>
-                    <select className="px-4 py-2 border border-slate-200 rounded-lg text-sm">
+                    <select className="px-3 sm:px-4 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm">
                       <option>Calibrados pelo Nine-box; Pontuação calibrada do gestor</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
                   <EvaluationChart 
                     data={evaluationChartData}
                     title="Avaliação de Competências"
@@ -146,67 +146,67 @@ export default function Dashboard() {
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100" data-testid="stats-total-employees">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100" data-testid="stats-total-employees">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-500 mb-1">Total Funcionários</p>
-                    <p className="text-2xl font-bold text-slate-900" data-testid="total-employees-count">
+                    <p className="text-xs sm:text-sm text-slate-500 mb-1">Total Funcionários</p>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900" data-testid="total-employees-count">
                       {stats.totalEmployees}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Users className="text-blue-600 w-6 h-6" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Users className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100" data-testid="stats-pending-evaluations">
+              <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100" data-testid="stats-pending-evaluations">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-500 mb-1">Avaliações Pendentes</p>
-                    <p className="text-2xl font-bold text-slate-900" data-testid="pending-evaluations-count">
+                    <p className="text-xs sm:text-sm text-slate-500 mb-1">Avaliações Pendentes</p>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900" data-testid="pending-evaluations-count">
                       {stats.pendingEvaluations}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                    <Clock className="text-orange-600 w-6 h-6" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <Clock className="text-orange-600 w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100" data-testid="stats-completed-evaluations">
+              <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100" data-testid="stats-completed-evaluations">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-500 mb-1">Avaliações Concluídas</p>
-                    <p className="text-2xl font-bold text-slate-900" data-testid="completed-evaluations-count">
+                    <p className="text-xs sm:text-sm text-slate-500 mb-1">Avaliações Concluídas</p>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900" data-testid="completed-evaluations-count">
                       {stats.completedEvaluations}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <CheckCircle className="text-green-600 w-6 h-6" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="text-green-600 w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100" data-testid="stats-departments">
+              <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100" data-testid="stats-departments">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-500 mb-1">Departamentos</p>
-                    <p className="text-2xl font-bold text-slate-900" data-testid="departments-count">
+                    <p className="text-xs sm:text-sm text-slate-500 mb-1">Departamentos</p>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900" data-testid="departments-count">
                       {stats.departments}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <Building className="text-purple-600 w-6 h-6" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <Building className="text-purple-600 w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100" data-testid="recent-activity">
-              <h3 className="text-lg font-semibold text-slate-900 mb-6">Atividades Recentes</h3>
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-100" data-testid="recent-activity">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4 sm:mb-6">Atividades Recentes</h3>
               <div className="space-y-4">
                 {activities.slice(0, 5).map((activity) => {
                   const Icon = getActivityIcon(activity.type);

@@ -87,72 +87,75 @@ export default function Employees() {
     <MainLayout>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4">
-          <div className="flex items-center justify-between">
+        <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900" data-testid="employees-title">
+              <h2 className="text-xl sm:text-2xl font-semibold text-slate-900" data-testid="employees-title">
                 Funcionários
               </h2>
-              <p className="text-slate-600">Gerencie informações dos colaboradores</p>
+              <p className="text-slate-600 text-sm sm:text-base">Gerencie informações dos colaboradores</p>
             </div>
             <button 
-              className="btn-primary" 
+              className="btn-primary text-sm sm:text-base w-full sm:w-auto" 
               onClick={handleCreateEmployee}
               data-testid="create-employee-button"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Novo Funcionário
+              <span className="hidden sm:inline">Novo Funcionário</span>
+              <span className="sm:hidden">Novo</span>
             </button>
           </div>
         </header>
 
         {/* Filters and Search */}
-        <div className="bg-white border-b border-slate-200 px-6 py-4">
-          <div className="flex items-center space-x-4">
+        <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center space-y-3 lg:space-y-0 lg:space-x-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <input 
                   type="text" 
                   placeholder="Buscar funcionários..." 
-                  className="form-input pl-10"
+                  className="form-input pl-10 w-full"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   data-testid="search-employees-input"
                 />
               </div>
             </div>
-            <select 
-              className="form-select"
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              data-testid="filter-department-select"
-            >
-              <option value="">Todos os Departamentos</option>
-              {departments.map((dept) => (
-                <option key={dept.id} value={dept.id}>{dept.name}</option>
-              ))}
-            </select>
-            <select 
-              className="form-select"
-              value={selectedPosition}
-              onChange={(e) => setSelectedPosition(e.target.value)}
-              data-testid="filter-position-select"
-            >
-              <option value="">Todos os Cargos</option>
-              <option value="junior">Júnior</option>
-              <option value="pleno">Pleno</option>
-              <option value="senior">Sênior</option>
-              <option value="gerente">Gerente</option>
-              <option value="diretor">Diretor</option>
-            </select>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+              <select 
+                className="form-select min-w-0 sm:min-w-[180px]"
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                data-testid="filter-department-select"
+              >
+                <option value="">Todos os Departamentos</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>{dept.name}</option>
+                ))}
+              </select>
+              <select 
+                className="form-select min-w-0 sm:min-w-[150px]"
+                value={selectedPosition}
+                onChange={(e) => setSelectedPosition(e.target.value)}
+                data-testid="filter-position-select"
+              >
+                <option value="">Todos os Cargos</option>
+                <option value="junior">Júnior</option>
+                <option value="pleno">Pleno</option>
+                <option value="senior">Sênior</option>
+                <option value="gerente">Gerente</option>
+                <option value="diretor">Diretor</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Content Area - Split View */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Left Side - Employees List */}
-          <div className={`${selectedEmployee ? 'w-1/2' : 'w-full'} transition-all duration-300 overflow-auto p-6 border-r border-slate-200`}>
+          <div className={`${selectedEmployee ? 'lg:w-1/2 h-1/2 lg:h-full' : 'w-full'} transition-all duration-300 overflow-auto p-4 sm:p-6 ${selectedEmployee ? 'border-b lg:border-b-0 lg:border-r border-slate-200' : ''}`}>
             <h3 className="text-lg font-semibold text-slate-900 mb-4">
               Funcionários Existentes
             </h3>
@@ -181,24 +184,26 @@ export default function Employees() {
                     data-testid={`employee-item-${employee.id}`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-purple-600" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-slate-900 truncate">
+                        <p className="font-medium text-slate-900 truncate text-sm sm:text-base">
                           {employee.name}
                         </p>
-                        <p className="text-sm text-slate-600 truncate">
-                          {employee.position.title} • {employee.department?.name || 'Sem departamento'}
+                        <p className="text-xs sm:text-sm text-slate-600 truncate">
+                          {employee.position.title}
+                          <span className="hidden sm:inline"> • {employee.department?.name || 'Sem departamento'}</span>
                         </p>
                       </div>
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-shrink-0">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           employee.status === 'active' 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-slate-100 text-slate-800'
                         }`}>
-                          {employee.status === 'active' ? 'Ativo' : 'Inativo'}
+                          <span className="hidden sm:inline">{employee.status === 'active' ? 'Ativo' : 'Inativo'}</span>
+                          <span className={`sm:hidden w-2 h-2 rounded-full ${employee.status === 'active' ? 'bg-green-500' : 'bg-slate-500'}`}></span>
                         </span>
                       </div>
                     </div>
@@ -210,7 +215,7 @@ export default function Employees() {
 
           {/* Right Side - Employee Details */}
           {selectedEmployee && (
-            <div className="w-1/2 overflow-auto p-6 bg-slate-50">
+            <div className="lg:w-1/2 h-1/2 lg:h-full overflow-auto p-4 sm:p-6 bg-slate-50">
               <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-slate-900">
@@ -267,7 +272,7 @@ export default function Employees() {
 
                   <div className="border-t border-slate-200 pt-6">
                     <h5 className="font-medium text-slate-900 mb-3">Informações de Trabalho</h5>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">
                           Departamento
@@ -336,7 +341,7 @@ export default function Employees() {
                   </div>
 
                   <div className="border-t border-slate-200 pt-6">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col sm:grid sm:grid-cols-2 gap-3">
                       <button 
                         onClick={() => handleEditEmployee(selectedEmployee.id)}
                         className="btn-primary text-sm"

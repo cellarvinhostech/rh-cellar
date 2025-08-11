@@ -51,7 +51,7 @@ export function Sidebar() {
 
   return (
     <aside 
-      className={`${isExpanded ? 'w-64' : 'w-16'} bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out`} 
+      className={`${isExpanded ? 'w-64' : 'w-16'} bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out hidden lg:flex`} 
       data-testid="sidebar"
     >
       {/* Header */}
