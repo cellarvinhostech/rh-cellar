@@ -220,7 +220,7 @@ export default function Employees() {
               <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={handleCloseSidebar} />
               
               {/* Details Panel */}
-              <div className="fixed inset-x-0 bottom-0 top-1/3 lg:relative lg:inset-auto lg:w-1/2 lg:h-full overflow-auto bg-white lg:bg-slate-50 z-50 lg:z-auto rounded-t-xl lg:rounded-none p-4 sm:p-6">
+              <div className="fixed inset-x-0 bottom-0 top-1/4 lg:relative lg:inset-auto lg:w-1/2 lg:h-full overflow-auto bg-white lg:bg-slate-50 z-50 lg:z-auto rounded-t-xl lg:rounded-none p-4 sm:p-6">
                 <div className="lg:bg-white lg:rounded-lg lg:shadow-sm lg:border lg:border-slate-200 lg:p-6">
                   {/* Mobile Handle */}
                   <div className="lg:hidden w-12 h-1 bg-slate-300 rounded-full mx-auto mb-4" />
