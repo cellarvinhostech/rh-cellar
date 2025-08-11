@@ -42,38 +42,30 @@ const navigationItems = [
   }
 ];
 
-export function MobileNav() {
+interface MobileNavProps {
+  onClose: () => void;
+}
+
+export function MobileNav({ onClose }: MobileNavProps) {
   const [location] = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
   const { authState, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
-    setIsOpen(false);
+    onClose();
   };
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="lg:hidden p-2 rounded-lg hover:bg-slate-100 transition-colors"
-        data-testid="mobile-menu-button"
-      >
-        <Menu className="w-6 h-6 text-slate-600" />
-      </button>
-
       {/* Mobile Menu Overlay */}
-      {isOpen && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setIsOpen(false)}
-            data-testid="mobile-menu-overlay"
-          />
-          
-          {/* Mobile Menu */}
-          <div className="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-50 lg:hidden">
+      <div 
+        className="fixed inset-0 bg-black/50 z-40"
+        onClick={onClose}
+        data-testid="mobile-menu-overlay"
+      />
+      
+      {/* Mobile Menu */}
+      <div className="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-50">
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="p-6 border-b border-slate-200">
@@ -88,7 +80,7 @@ export function MobileNav() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setIsOpen(false)}
+                    onClick={onClose}
                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
                     data-testid="close-mobile-menu"
                   >
@@ -124,7 +116,7 @@ export function MobileNav() {
                     <Link 
                       key={item.id} 
                       href={item.path}
-                      onClick={() => setIsOpen(false)}
+                      onClick={onClose}
                     >
                       <div 
                         className={`flex items-center space-x-3 p-3 rounded-lg transition-all cursor-pointer ${
@@ -155,8 +147,6 @@ export function MobileNav() {
               </div>
             </div>
           </div>
-        </>
-      )}
     </>
   );
 }
