@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Users, Building, Table, ClipboardList, Star, BarChart3, Settings, Menu, ChevronLeft } from "lucide-react";
+import { Users, Building, Table, ClipboardList, Star, BarChart3, Settings, Menu, ChevronLeft, LogOut, User } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { useAuth } from "@/hooks/use-auth";
 
 const navigationItems = [
   {
@@ -44,7 +45,9 @@ const navigationItems = [
 
 export function Sidebar() {
   const [location] = useLocation();
+  const [_, navigate] = useLocation();
   const [isExpanded, setIsExpanded] = useState(false);
+  const { authState, logout } = useAuth();
 
   return (
     <aside 
@@ -136,34 +139,79 @@ export function Sidebar() {
       {/* User Profile */}
       <div className={`${isExpanded ? 'p-4' : 'px-3 pb-4'} border-t border-slate-200 transition-all duration-300`}>
         {isExpanded ? (
-          <div className="flex items-center space-x-3">
-            <img 
-              src="https://pixabay.com/get/gadfaeda8f45dac1f50485b9f6697d3ce0712f46d6e1d863b67553e7660784f8c9f44e982174e664fa7ca6fc89ff1104b2ebff8e1df9df0aeb75e7993ce97e90b_1280.jpg" 
-              alt="Profile" 
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-100"
-              data-testid="user-avatar"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900" data-testid="user-name">Ana Silva</p>
-              <p className="text-xs text-slate-500" data-testid="user-role">Gerente RH</p>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <Link href="/profile">
+                <img 
+                  src={authState.user?.avatar || "https://pixabay.com/get/gadfaeda8f45dac1f50485b9f6697d3ce0712f46d6e1d863b67553e7660784f8c9f44e982174e664fa7ca6fc89ff1104b2ebff8e1df9df0aeb75e7993ce97e90b_1280.jpg"} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-100 cursor-pointer hover:ring-purple-200 transition-colors"
+                  data-testid="user-avatar"
+                />
+              </Link>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-900" data-testid="user-name">
+                  {authState.user?.name || "Usuário"}
+                </p>
+                <p className="text-xs text-slate-500" data-testid="user-role">
+                  {authState.user?.role || "Colaborador"}
+                </p>
+              </div>
             </div>
-            <button 
-              className="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-              data-testid="settings-button"
-              title="Configurações"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
+            
+            <div className="flex space-x-2">
+              <Tooltip content="Perfil">
+                <Link href="/profile">
+                  <button className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+                    <User className="w-4 h-4" />
+                  </button>
+                </Link>
+              </Tooltip>
+              
+              <Tooltip content="Configurações">
+                <button className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+                  <Settings className="w-4 h-4" />
+                </button>
+              </Tooltip>
+              
+              <Tooltip content="Sair">
+                <button 
+                  onClick={() => {
+                    logout();
+                    navigate("/login");
+                  }}
+                  className="flex-1 text-slate-400 hover:text-red-600 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
+                  data-testid="logout-button"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            </div>
           </div>
         ) : (
-          <div className="flex justify-center">
-            <Tooltip content="Ana Silva - Gerente RH">
-              <img 
-                src="https://pixabay.com/get/gadfaeda8f45dac1f50485b9f6697d3ce0712f46d6e1d863b67553e7660784f8c9f44e982174e664fa7ca6fc89ff1104b2ebff8e1df9df0aeb75e7993ce97e90b_1280.jpg" 
-                alt="Profile" 
-                className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-100 cursor-pointer"
-                data-testid="user-avatar"
-              />
+          <div className="flex flex-col items-center space-y-2">
+            <Tooltip content={`${authState.user?.name || "Usuário"} - ${authState.user?.role || "Colaborador"}`}>
+              <Link href="/profile">
+                <img 
+                  src={authState.user?.avatar || "https://pixabay.com/get/gadfaeda8f45dac1f50485b9f6697d3ce0712f46d6e1d863b67553e7660784f8c9f44e982174e664fa7ca6fc89ff1104b2ebff8e1df9df0aeb75e7993ce97e90b_1280.jpg"} 
+                  alt="Profile" 
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-100 cursor-pointer hover:ring-purple-200 transition-colors"
+                  data-testid="user-avatar"
+                />
+              </Link>
+            </Tooltip>
+            
+            <Tooltip content="Sair">
+              <button 
+                onClick={() => {
+                  logout();
+                  navigate("/login");
+                }}
+                className="w-10 h-10 text-slate-400 hover:text-red-600 flex items-center justify-center rounded-xl hover:bg-red-50 transition-colors"
+                data-testid="logout-button-compact"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </Tooltip>
           </div>
         )}
