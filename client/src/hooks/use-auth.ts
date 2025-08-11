@@ -49,9 +49,8 @@ export function useAuth() {
       if (credentials.email === "ana.silva@empresa.com" && credentials.password === "123456") {
         const updatedUser = { ...mockUser, lastLogin: new Date().toISOString() };
         
-        if (credentials.rememberMe) {
-          localStorage.setItem("hr_user", JSON.stringify(updatedUser));
-        }
+        // Always store user data for session persistence
+        localStorage.setItem("hr_user", JSON.stringify(updatedUser));
         
         setAuthState({
           user: updatedUser,

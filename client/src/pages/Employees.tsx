@@ -2,8 +2,38 @@ import { useState } from "react";
 import { Plus, Search, Users } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { EmployeeCard } from "@/components/employees/EmployeeCard";
+import { EmployeeDetailSidebar } from "@/components/employees/EmployeeDetailSidebar";
 import { useHRData } from "@/hooks/use-hr-data";
 import { useToast } from "@/hooks/use-toast";
+interface EmployeeWithDetails {
+  id: string;
+  name: string;
+  email: string;
+  status: "active" | "inactive" | "pending_evaluation";
+  departmentId: string;
+  positionId: string;
+  hireDate: string;
+  managerId?: string;
+  avatar?: string;
+  position: {
+    id: string;
+    title: string;
+    level: string;
+    department?: string;
+  };
+  department?: {
+    id: string;
+    name: string;
+  };
+  manager?: {
+    id: string;
+    name: string;
+  };
+  phone?: string;
+  location?: string;
+  salary?: number;
+  performanceRating?: number;
+}
 
 export default function Employees() {
   const { getEmployeesWithDetails, departments, positions } = useHRData();
@@ -11,6 +41,8 @@ export default function Employees() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedPosition, setSelectedPosition] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithDetails | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const employees = getEmployeesWithDetails();
 
@@ -32,10 +64,16 @@ export default function Employees() {
   };
 
   const handleViewEmployee = (id: string) => {
-    toast({
-      title: "Visualizar funcionário",
-      description: `Visualizando detalhes do funcionário ${id}`,
-    });
+    const employee = employees.find(emp => emp.id === id);
+    if (employee) {
+      setSelectedEmployee(employee);
+      setIsSidebarOpen(true);
+    }
+  };
+
+  const handleCloseSidebar = () => {
+    setIsSidebarOpen(false);
+    setSelectedEmployee(null);
   };
 
   const handleEditEmployee = (id: string) => {
@@ -138,6 +176,13 @@ export default function Employees() {
           )}
         </div>
       </div>
+
+      {/* Employee Detail Sidebar */}
+      <EmployeeDetailSidebar
+        employee={selectedEmployee}
+        isOpen={isSidebarOpen}
+        onClose={handleCloseSidebar}
+      />
     </MainLayout>
   );
 }
