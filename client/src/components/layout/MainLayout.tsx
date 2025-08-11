@@ -12,7 +12,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <TopBar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-hidden pb-16 lg:pb-0" data-testid="main-content">
+        <main className="flex-1 overflow-hidden pb-18 lg:pb-0" data-testid="main-content">
           {children}
         </main>
       </div>
