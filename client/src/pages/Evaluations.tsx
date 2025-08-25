@@ -3,6 +3,8 @@ import { Plus, Search, Eye, Edit, Star, Clock, CheckCircle, Trash2 } from "lucid
 import { useLocation } from "wouter";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription } from "@/components/ui/modal";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
+import { usePermissions } from "@/hooks/use-permissions";
 import { useEvaluationsAPI } from "@/hooks/use-evaluations-api";
 import { useForms } from "@/hooks/use-forms-api";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,6 +15,7 @@ export default function Evaluations() {
   const { evaluations, loading, createEvaluation, deleteEvaluation } = useEvaluationsAPI();
   const { forms } = useForms();
   const { authState } = useAuth();
+  const { permissions, isAdmin, isUser } = usePermissions();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   
@@ -33,8 +36,22 @@ export default function Evaluations() {
     peso_outros: "10"
   });
 
+  // Filtrar avaliações baseado na role
+  const filteredEvaluationsByRole = evaluations.filter((evaluation) => {
+    if (!evaluation) return false;
+    
+    // Se for admin, vê todas as avaliações
+    if (isAdmin) return true;
+    
+    // Se for user, vê apenas suas próprias avaliações (quando implementarmos a relação)
+    // Por enquanto, vamos mostrar todas para users também, mas sem permissões de edição
+    if (isUser) return true;
+    
+    return false;
+  });
+
   // Filtrar avaliações
-  const filteredEvaluations = evaluations.filter((evaluation) => {
+  const filteredEvaluations = filteredEvaluationsByRole.filter((evaluation) => {
     // Verificar se evaluation e suas propriedades existem
     if (!evaluation) return false;
     
@@ -224,14 +241,16 @@ export default function Evaluations() {
               </h2>
               <p className="text-slate-600">Gerencie avaliações de performance</p>
             </div>
-            <button 
-              className="btn-primary" 
-              onClick={handleCreateEvaluation}
-              data-testid="create-evaluation-button"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Avaliação
-            </button>
+            <PermissionGuard roles={['admin']} showFallback={false}>
+              <button 
+                className="btn-primary" 
+                onClick={handleCreateEvaluation}
+                data-testid="create-evaluation-button"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Avaliação
+              </button>
+            </PermissionGuard>
           </div>
         </header>
 
@@ -293,17 +312,19 @@ export default function Evaluations() {
                     data-testid={`evaluation-card-${evaluation.id}`}
                   >
                     {/* Botão de exclusão */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteEvaluation(evaluation);
-                      }}
-                      className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
-                      title="Excluir avaliação"
-                      data-testid={`delete-evaluation-${evaluation.id}`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <PermissionGuard roles={['admin']} showFallback={false}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteEvaluation(evaluation);
+                        }}
+                        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
+                        title="Excluir avaliação"
+                        data-testid={`delete-evaluation-${evaluation.id}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </PermissionGuard>
 
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1 min-w-0 pr-8">
@@ -358,14 +379,16 @@ export default function Evaluations() {
                           <Eye className="w-4 h-4 mr-1" />
                           Ver
                         </button>
-                        <button 
-                          className="btn-secondary flex-1"
-                          onClick={() => handleEditEvaluation(evaluation)}
-                          data-testid={`edit-evaluation-${evaluation.id}`}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Editar
-                        </button>
+                        <PermissionGuard roles={['admin']} showFallback={false}>
+                          <button 
+                            className="btn-secondary flex-1"
+                            onClick={() => handleEditEvaluation(evaluation)}
+                            data-testid={`edit-evaluation-${evaluation.id}`}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Editar
+                          </button>
+                        </PermissionGuard>
                       </div>
                     </div>
                   </div>

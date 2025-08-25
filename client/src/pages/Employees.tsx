@@ -4,6 +4,8 @@ import { useLocation } from "wouter";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { EmployeeCard } from "@/components/employees/EmployeeCard";
 import { EmployeeDetailSidebar } from "@/components/employees/EmployeeDetailSidebar";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
+import { usePermissions } from "@/hooks/use-permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +30,7 @@ import type { EmployeeWithDetails } from "@/types/hr";
 export default function Employees() {
   const { employees: apiEmployees, isLoading, error, deleteEmployee } = useEmployees();
   const { departments, positions } = useHRData();
+  const { permissions } = usePermissions();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -157,8 +160,8 @@ export default function Employees() {
   // Filters Component for reuse
   const FiltersContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className="space-y-4">
-      <div className={`space-y-4 ${isMobile ? '' : 'flex flex-row space-y-0 space-x-4'}`}>
-        <div className={isMobile ? '' : 'flex-1'}>
+      <div className={`${isMobile ? 'space-y-4' : 'flex space-x-4'}`}>
+        <div className={isMobile ? '' : 'w-48'}>
           <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Todos os Departamentos" />
@@ -174,7 +177,7 @@ export default function Employees() {
           </Select>
         </div>
 
-        <div className={isMobile ? '' : 'flex-1'}>
+        <div className={isMobile ? '' : 'w-48'}>
           <Select value={selectedPosition} onValueChange={setSelectedPosition}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Todos os Cargos" />
@@ -221,15 +224,17 @@ export default function Employees() {
               </h2>
               <p className="text-slate-600 text-sm sm:text-base">Gerencie informações dos colaboradores</p>
             </div>
-            <Button 
-              onClick={handleCreateEmployee}
-              className="w-full sm:w-auto"
-              data-testid="create-employee-button"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Novo Funcionário</span>
-              <span className="sm:hidden">Novo</span>
-            </Button>
+            <PermissionGuard roles={['admin']} showFallback={false}>
+              <Button 
+                onClick={handleCreateEmployee}
+                className="w-full sm:w-auto"
+                data-testid="create-employee-button"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Novo Funcionário</span>
+                <span className="sm:hidden">Novo</span>
+              </Button>
+            </PermissionGuard>
           </div>
         </header>
 
@@ -332,6 +337,7 @@ export default function Employees() {
                       onView={() => handleViewEmployee(employee.id)}
                       onEdit={() => handleEditEmployee(employee.id)}
                       onDelete={() => handleDeleteEmployee(employee.id)}
+                      showEditActions={permissions.canEditEmployees}
                     />
                   ))}
                 </div>

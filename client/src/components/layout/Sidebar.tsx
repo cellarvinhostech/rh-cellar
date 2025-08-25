@@ -3,37 +3,44 @@ import { Link, useLocation } from "wouter";
 import { Users, Building, Table, ClipboardList, Star, BarChart3, Settings, Menu, ChevronLeft, LogOut, User, Briefcase, Shield } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { usePermissions } from "@/hooks/use-permissions";
+import type { UserRole } from "@/types/auth";
 
 const navigationItems = [
   {
     id: "dashboard",
     label: "Dashboard",
     icon: BarChart3,
-    path: "/"
+    path: "/",
+    requirePermission: { resource: "dashboard", action: "view" }
   },
   {
     id: "employees",
     label: "Funcionários",
     icon: Users,
-    path: "/employees"
+    path: "/employees",
+    requirePermission: { resource: "employees", action: "view" }
   },
   {
     id: "forms",
     label: "Formulários",
     icon: ClipboardList,
-    path: "/forms"
+    path: "/forms",
+    requireRole: "admin" as const
   },
   {
     id: "evaluations",
     label: "Avaliações",
     icon: Star,
-    path: "/evaluations"
+    path: "/evaluations",
+    requirePermission: { resource: "evaluations", action: "view" }
   },
   {
     id: "settings",
     label: "Configurações",
     icon: Settings,
-    path: "/settings"
+    path: "/settings",
+    requireRole: "admin" as const
   }
 ];
 
@@ -42,6 +49,18 @@ export function Sidebar() {
   const [_, navigate] = useLocation();
   const [isExpanded, setIsExpanded] = useState(false);
   const { authState, logout } = useAuth();
+  const { hasPermission, userRole } = usePermissions();
+
+  // Filter navigation items based on permissions
+  const visibleNavigationItems = navigationItems.filter(item => {
+    if (item.requireRole) {
+      return userRole === item.requireRole;
+    }
+    if (item.requirePermission) {
+      return hasPermission(item.requirePermission.resource, item.requirePermission.action);
+    }
+    return true;
+  });
 
   // Update CSS custom property for sidebar width
   useEffect(() => {
@@ -103,7 +122,7 @@ export function Sidebar() {
       {/* Navigation Menu */}
       <nav className={`flex-1 ${isExpanded ? 'p-4' : 'px-3 py-4'} transition-all duration-300 overflow-y-auto`} data-testid="navigation">
         <ul className={`${isExpanded ? 'space-y-2' : 'space-y-4'}`}>
-          {navigationItems.map((item) => {
+          {visibleNavigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = location === item.path;
             
@@ -186,19 +205,21 @@ export function Sidebar() {
                 </TooltipContent>
               </Tooltip>
               
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button 
-                    onClick={() => navigate("/settings")}
-                    className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Configurações</p>
-                </TooltipContent>
-              </Tooltip>
+              {userRole === 'admin' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      onClick={() => navigate("/settings")}
+                      className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Configurações</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
               
               <Tooltip>
                 <TooltipTrigger asChild>
