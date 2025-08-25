@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Users, Building, Table, ClipboardList, Star, BarChart3, Settings, Menu, ChevronLeft, LogOut, User, Briefcase, Shield } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -18,24 +18,6 @@ const navigationItems = [
     path: "/employees"
   },
   {
-    id: "departments",
-    label: "Departamentos",
-    icon: Building,
-    path: "/departments"
-  },
-  {
-    id: "positions",
-    label: "Cargos",
-    icon: Briefcase,
-    path: "/positions"
-  },
-  {
-    id: "hierarchy",
-    label: "Hierarquia",
-    icon: Table,
-    path: "/hierarchy"
-  },
-  {
     id: "forms",
     label: "Formulários",
     icon: ClipboardList,
@@ -46,12 +28,6 @@ const navigationItems = [
     label: "Avaliações",
     icon: Star,
     path: "/evaluations"
-  },
-  {
-    id: "hierarchy-levels",
-    label: "Níveis",
-    icon: Shield,
-    path: "/hierarchy-levels"
   },
   {
     id: "settings",
@@ -67,9 +43,17 @@ export function Sidebar() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { authState, logout } = useAuth();
 
+  // Update CSS custom property for sidebar width
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--sidebar-width', 
+      isExpanded ? '16rem' : '4rem'
+    );
+  }, [isExpanded]);
+
   return (
     <aside 
-      className={`${isExpanded ? 'w-64' : 'w-16'} bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out hidden lg:flex`} 
+      className={`${isExpanded ? 'w-64' : 'w-16'} bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out hidden lg:flex fixed left-0 top-0 h-screen z-40`} 
       data-testid="sidebar"
     >
       {/* Header */}
@@ -117,7 +101,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation Menu */}
-      <nav className={`flex-1 ${isExpanded ? 'p-4' : 'px-3 py-4'} transition-all duration-300`} data-testid="navigation">
+      <nav className={`flex-1 ${isExpanded ? 'p-4' : 'px-3 py-4'} transition-all duration-300 overflow-y-auto`} data-testid="navigation">
         <ul className={`${isExpanded ? 'space-y-2' : 'space-y-4'}`}>
           {navigationItems.map((item) => {
             const Icon = item.icon;
@@ -165,13 +149,13 @@ export function Sidebar() {
       </nav>
 
       {/* User Profile */}
-      <div className={`${isExpanded ? 'p-4' : 'px-3 pb-4'} border-t border-slate-200 transition-all duration-300`}>
+      <div className={`${isExpanded ? 'p-4' : 'px-3 pb-4'} border-t border-slate-200 transition-all duration-300 flex-shrink-0 mt-auto`}>
         {isExpanded ? (
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <Link href="/profile">
                 <img 
-                  src={authState.user?.avatar || "https://pixabay.com/get/gadfaeda8f45dac1f50485b9f6697d3ce0712f46d6e1d863b67553e7660784f8c9f44e982174e664fa7ca6fc89ff1104b2ebff8e1df9df0aeb75e7993ce97e90b_1280.jpg"} 
+                  src={authState.user?.avatar || "https://terroir.cellarvinhos.com/storage/uploads/talles.amadeu@cellarvinhos.com-1724183567.jpg"} 
                   alt="Profile" 
                   className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-100 cursor-pointer hover:ring-purple-200 transition-colors"
                   data-testid="user-avatar"
@@ -190,11 +174,12 @@ export function Sidebar() {
             <div className="flex space-x-2">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href="/profile">
-                    <button className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
-                      <User className="w-4 h-4" />
-                    </button>
-                  </Link>
+                  <button 
+                    onClick={() => navigate("/profile")}
+                    className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Perfil</p>
@@ -203,7 +188,10 @@ export function Sidebar() {
               
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
+                  <button 
+                    onClick={() => navigate("/settings")}
+                    className="flex-1 text-slate-400 hover:text-slate-600 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+                  >
                     <Settings className="w-4 h-4" />
                   </button>
                 </TooltipTrigger>
@@ -237,7 +225,7 @@ export function Sidebar() {
               <TooltipTrigger asChild>
                 <Link href="/profile">
                   <img 
-                    src={authState.user?.avatar || "https://pixabay.com/get/gadfaeda8f45dac1f50485b9f6697d3ce0712f46d6e1d863b67553e7660784f8c9f44e982174e664fa7ca6fc89ff1104b2ebff8e1df9df0aeb75e7993ce97e90b_1280.jpg"} 
+                    src={authState.user?.avatar || "https://terroir.cellarvinhos.com/storage/uploads/talles.amadeu@cellarvinhos.com-1724183567.jpg"} 
                     alt="Profile" 
                     className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-100 cursor-pointer hover:ring-purple-200 transition-colors"
                     data-testid="user-avatar"

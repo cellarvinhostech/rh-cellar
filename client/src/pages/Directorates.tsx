@@ -1,33 +1,40 @@
 import { useState } from "react";
-import { Plus, Building, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Building2, Edit, Trash2, Loader2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { useHierarchyLevelsAPI } from "@/hooks/use-hierarchy-levels-api";
+import { useDirectoratesAPI } from "@/hooks/use-directorates-api";
 import { useToast } from "@/hooks/use-toast";
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription } from "@/components/ui/modal";
 
-export default function HierarchyLevels() {
+export default function Directorates() {
   const { 
-    hierarchyLevels, 
+    directorates, 
     loading, 
-    createHierarchyLevel, 
-    updateHierarchyLevel, 
-    deleteHierarchyLevel 
-  } = useHierarchyLevelsAPI();
+    createDirectorate, 
+    updateDirectorate, 
+    deleteDirectorate 
+  } = useDirectoratesAPI();
   const { toast } = useToast();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingLevel, setEditingLevel] = useState<any>(null);
-  const [formData, setFormData] = useState({ name: "", description: "" });
+  const [editingDirectorate, setEditingDirectorate] = useState<any>(null);
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    description: "" 
+  });
   const [submitting, setSubmitting] = useState(false);
 
-  const handleCreateLevel = () => {
-    setEditingLevel(null);
+  const handleCreateDirectorate = () => {
+    setEditingDirectorate(null);
     setFormData({ name: "", description: "" });
     setIsModalOpen(true);
   };
 
-  const handleEditLevel = (level: any) => {
-    setEditingLevel(level);
-    setFormData({ name: level.name, description: level.description || "" });
+  const handleEditDirectorate = (directorate: any) => {
+    setEditingDirectorate(directorate);
+    setFormData({ 
+      name: directorate.name, 
+      description: directorate.description || "" 
+    });
     setIsModalOpen(true);
   };
 
@@ -37,7 +44,7 @@ export default function HierarchyLevels() {
     if (!formData.name.trim()) {
       toast({
         title: "Erro",
-        description: "Nome do nível hierárquico é obrigatório.",
+        description: "O nome da diretoria é obrigatório.",
         variant: "destructive"
       });
       return;
@@ -46,30 +53,30 @@ export default function HierarchyLevels() {
     setSubmitting(true);
     
     try {
-      if (editingLevel) {
-        await updateHierarchyLevel(editingLevel.id, formData);
+      if (editingDirectorate) {
+        await updateDirectorate(editingDirectorate.id, formData);
       } else {
-        await createHierarchyLevel(formData);
+        await createDirectorate(formData);
       }
       
       setIsModalOpen(false);
       setFormData({ name: "", description: "" });
-      setEditingLevel(null);
+      setEditingDirectorate(null);
     } catch (error) {
       // O erro já é tratado no hook
-      console.error("Erro ao salvar nível hierárquico:", error);
+      console.error("Erro ao salvar diretoria:", error);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteLevel = async (level: any) => {
-    if (confirm("Tem certeza que deseja excluir este nível hierárquico?")) {
+  const handleDeleteDirectorate = async (directorate: any) => {
+    if (confirm("Tem certeza que deseja excluir esta diretoria?")) {
       try {
-        await deleteHierarchyLevel(level.id);
+        await deleteDirectorate(directorate.id);
       } catch (error) {
         // O erro já é tratado no hook
-        console.error("Erro ao excluir nível hierárquico:", error);
+        console.error("Erro ao excluir diretoria:", error);
       }
     }
   };
@@ -81,88 +88,83 @@ export default function HierarchyLevels() {
         <header className="bg-white border-b border-slate-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900" data-testid="hierarchy-levels-title">
-                Níveis Hierárquicos
+              <h2 className="text-2xl font-semibold text-slate-900" data-testid="directorates-title">
+                Diretorias
               </h2>
-              <p className="text-slate-600">Gerencie os níveis hierárquicos da empresa</p>
+              <p className="text-slate-600">Gerencie as diretorias da empresa</p>
             </div>
             <button 
               className="btn-primary" 
-              onClick={handleCreateLevel}
-              data-testid="create-hierarchy-level-button"
+              onClick={handleCreateDirectorate}
+              data-testid="create-directorate-button"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Novo Nível
+              Nova Diretoria
             </button>
           </div>
         </header>
 
-        {/* Hierarchy Levels List */}
+        {/* Directorates List */}
         <div className="flex-1 overflow-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-              <span className="ml-2 text-slate-600">Carregando níveis hierárquicos...</span>
+              <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+              <span className="ml-2 text-slate-600">Carregando diretorias...</span>
             </div>
-          ) : hierarchyLevels.length === 0 ? (
-            <div className="text-center py-12" data-testid="no-hierarchy-levels-message">
-              <Building className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">Nenhum nível hierárquico cadastrado</h3>
-              <p className="text-slate-600">Comece criando seu primeiro nível hierárquico.</p>
+          ) : directorates.length === 0 ? (
+            <div className="text-center py-12" data-testid="no-directorates-message">
+              <Building2 className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+              <h3 className="text-lg font-medium text-slate-900 mb-2">Nenhuma diretoria cadastrada</h3>
+              <p className="text-slate-600">Comece criando sua primeira diretoria.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="hierarchy-levels-grid">
-              {hierarchyLevels.map((level) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="directorates-grid">
+              {directorates.map((directorate) => (
                 <div 
-                  key={level.id}
+                  key={directorate.id}
                   className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow"
-                  data-testid={`hierarchy-level-card-${level.id}`}
+                  data-testid={`directorate-card-${directorate.id}`}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <Building className="text-purple-600 w-6 h-6" />
+                        <Building2 className="text-purple-600 w-6 h-6" />
                       </div>
                       <div>
                         <h3 
                           className="font-semibold text-slate-900"
-                          data-testid={`hierarchy-level-name-${level.id}`}
+                          data-testid={`directorate-name-${directorate.id}`}
                         >
-                          {level.name}
+                          {directorate.name}
                         </h3>
-                        {level.created_at && (
-                          <p className="text-xs text-slate-500 mt-1">
-                            Criado em {new Date(level.created_at).toLocaleDateString('pt-BR')}
-                          </p>
-                        )}
+                        <p className="text-xs text-slate-500 mt-1">
+                          Criado em {new Date(directorate.created_at).toLocaleDateString('pt-BR')}
+                        </p>
                       </div>
                     </div>
                     
                     <div className="flex space-x-1">
                       <button
                         className="p-2 text-slate-400 hover:text-slate-600"
-                        onClick={() => handleEditLevel(level)}
-                        data-testid={`edit-hierarchy-level-${level.id}`}
+                        onClick={() => handleEditDirectorate(directorate)}
+                        data-testid={`edit-directorate-${directorate.id}`}
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         className="p-2 text-slate-400 hover:text-red-600"
-                        onClick={() => handleDeleteLevel(level)}
-                        data-testid={`delete-hierarchy-level-${level.id}`}
+                        onClick={() => handleDeleteDirectorate(directorate)}
+                        data-testid={`delete-directorate-${directorate.id}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
 
-                  {level.description && (
+                  {directorate.description && (
                     <div className="mt-3">
-                      <p 
-                        className="text-sm text-slate-600"
-                        data-testid={`hierarchy-level-description-${level.id}`}
-                      >
-                        {level.description}
+                      <p className="text-sm text-slate-600">
+                        {directorate.description}
                       </p>
                     </div>
                   )}
@@ -174,42 +176,41 @@ export default function HierarchyLevels() {
 
         {/* Modal */}
         <Modal open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <ModalContent data-testid="hierarchy-level-modal">
+          <ModalContent data-testid="directorate-modal">
             <ModalHeader>
               <ModalTitle>
-                {editingLevel ? "Editar Nível Hierárquico" : "Novo Nível Hierárquico"}
+                {editingDirectorate ? "Editar Diretoria" : "Nova Diretoria"}
               </ModalTitle>
               <ModalDescription>
-                {editingLevel 
-                  ? "Atualize as informações do nível hierárquico."
-                  : "Preencha as informações para criar um novo nível hierárquico."
+                {editingDirectorate 
+                  ? "Atualize as informações da diretoria."
+                  : "Preencha as informações para criar uma nova diretoria."
                 }
               </ModalDescription>
             </ModalHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="form-label">Nome do Nível Hierárquico</label>
+                <label className="form-label">Nome da Diretoria</label>
                 <input
                   type="text"
                   className="form-input"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Digite o nome do nível hierárquico"
+                  placeholder="Digite o nome da diretoria"
                   required
-                  data-testid="hierarchy-level-name-input"
+                  data-testid="directorate-name-input"
                 />
               </div>
               
               <div>
-                <label className="form-label">Descrição (opcional)</label>
+                <label className="form-label">Descrição</label>
                 <textarea
-                  className="form-textarea"
-                  rows={3}
+                  className="form-input min-h-[80px]"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Digite uma descrição para o nível hierárquico"
-                  data-testid="hierarchy-level-description-input"
+                  placeholder="Digite uma descrição para a diretoria (opcional)"
+                  data-testid="directorate-description-input"
                 />
               </div>
               
@@ -218,7 +219,7 @@ export default function HierarchyLevels() {
                   type="button"
                   className="btn-secondary flex-1"
                   onClick={() => setIsModalOpen(false)}
-                  data-testid="cancel-hierarchy-level-button"
+                  data-testid="cancel-directorate-button"
                   disabled={submitting}
                 >
                   Cancelar
@@ -226,16 +227,16 @@ export default function HierarchyLevels() {
                 <button
                   type="submit"
                   className="btn-primary flex-1"
-                  data-testid="save-hierarchy-level-button"
+                  data-testid="save-directorate-button"
                   disabled={submitting}
                 >
                   {submitting ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {editingLevel ? "Atualizando..." : "Criando..."}
+                      {editingDirectorate ? "Atualizando..." : "Criando..."}
                     </>
                   ) : (
-                    editingLevel ? "Atualizar" : "Criar"
+                    editingDirectorate ? "Atualizar" : "Criar"
                   )}
                 </button>
               </div>

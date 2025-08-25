@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Plus, Search, Users, User, Mail, Phone, MapPin, Star, X, Filter } from "lucide-react";
+import { useLocation } from "wouter";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { EmployeeCard } from "@/components/employees/EmployeeCard";
 import { EmployeeDetailSidebar } from "@/components/employees/EmployeeDetailSidebar";
@@ -8,52 +9,81 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
+import { useEmployees } from "@/hooks/use-employees-api";
 import { useHRData } from "@/hooks/use-hr-data";
 import { useToast } from "@/hooks/use-toast";
-import { ExportButtons } from "@/components/common/ExportButtons";
-import { ExportData } from "@/utils/exportUtils";
-
-interface EmployeeWithDetails {
-  id: string;
-  name: string;
-  email: string;
-  status: "active" | "inactive" | "pending_evaluation";
-  departmentId: string;
-  positionId: string;
-  hireDate: string;
-  managerId?: string;
-  avatar?: string;
-  position: {
-    id: string;
-    title: string;
-    level: string;
-    department?: string;
-  };
-  department?: {
-    id: string;
-    name: string;
-  };
-  manager?: {
-    id: string;
-    name: string;
-  };
-  phone?: string;
-  location?: string;
-  salary?: number;
-  performanceRating?: number;
-}
+import { createEmployeeWithDetails } from "@/utils/employee-mapper";
+import type { EmployeeWithDetails } from "@/types/hr";
 
 export default function Employees() {
-  const { getEmployeesWithDetails, departments, positions } = useHRData();
+  const { employees: apiEmployees, isLoading, error, deleteEmployee } = useEmployees();
+  const { departments, positions } = useHRData();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedPosition, setSelectedPosition] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithDetails | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeWithDetails | null>(null);
 
-  const employees = getEmployeesWithDetails();
+  // Converter dados da API para o formato esperado
+  const employees = useMemo(() => {
+    return apiEmployees.map(createEmployeeWithDetails);
+  }, [apiEmployees]);
+
+  // Criar lista única de departamentos da API
+  const apiDepartments = useMemo(() => {
+    const deptMap = new Map();
+    apiEmployees.forEach(emp => {
+      if (emp.department_id && emp.demartment_name) {
+        deptMap.set(emp.department_id, {
+          id: emp.department_id,
+          name: emp.demartment_name
+        });
+      }
+    });
+    return Array.from(deptMap.values());
+  }, [apiEmployees]);
+
+  // Mostrar loading
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="h-full flex items-center justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-600">Carregando funcionários...</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // Mostrar erro
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Erro ao carregar funcionários</p>
+            <p className="text-slate-600 text-sm">{error.message}</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
 
   // Filter employees based on search and filters
   const filteredEmployees = employees.filter((employee) => {
@@ -66,10 +96,7 @@ export default function Employees() {
   });
 
   const handleCreateEmployee = () => {
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "A criação de funcionários será implementada em breve.",
-    });
+    setLocation("/employees/create");
   };
 
   const handleViewEmployee = (id: string) => {
@@ -86,10 +113,33 @@ export default function Employees() {
   };
 
   const handleEditEmployee = (id: string) => {
-    toast({
-      title: "Editar funcionário",
-      description: `Editando funcionário ${id}`,
-    });
+    setLocation(`/employees/edit/${id}`);
+  };
+
+  const handleDeleteEmployee = (id: string) => {
+    // Encontrar o funcionário para mostrar no dialog de confirmação
+    const employee = employees.find(emp => emp.id === id);
+    if (employee) {
+      setEmployeeToDelete(employee);
+    }
+  };
+
+  const confirmDeleteEmployee = () => {
+    if (employeeToDelete) {
+      deleteEmployee(employeeToDelete.id);
+      
+      // Se o funcionário excluído estava sendo visualizado, fechar o sidebar
+      if (selectedEmployee?.id === employeeToDelete.id) {
+        setSelectedEmployee(null);
+        setIsSidebarOpen(false);
+      }
+      
+      setEmployeeToDelete(null);
+    }
+  };
+
+  const cancelDeleteEmployee = () => {
+    setEmployeeToDelete(null);
   };
 
   const clearFilters = () => {
@@ -109,30 +159,13 @@ export default function Employees() {
     <div className="space-y-4">
       <div className={`space-y-4 ${isMobile ? '' : 'flex flex-row space-y-0 space-x-4'}`}>
         <div className={isMobile ? '' : 'flex-1'}>
-          <ExportButtons 
-            data={employees.map((employee): ExportData => ({
-              id: employee.id,
-              name: employee.name,
-              email: employee.email,
-              department: employee.department?.name || 'Não informado',
-              position: employee.position.title,
-              status: employee.status,
-              hireDate: employee.hireDate,
-              salary: employee.salary
-            }))}
-            filename="Funcionários"
-            className="w-full"
-          />
-        </div>
-        
-        <div className={isMobile ? '' : 'flex-1'}>
           <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Todos os Departamentos" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os Departamentos</SelectItem>
-              {departments.map((dept) => (
+              {apiDepartments.map((dept) => (
                 <SelectItem key={dept.id} value={dept.id}>
                   {dept.name}
                 </SelectItem>
@@ -233,7 +266,7 @@ export default function Employees() {
               </SheetTrigger>
               <SheetContent side="bottom" className="h-[400px]">
                 <SheetHeader>
-                  <SheetTitle>Filtros e Exportar</SheetTitle>
+                  <SheetTitle>Filtros</SheetTitle>
                 </SheetHeader>
                 <div className="mt-6">
                   <FiltersContent isMobile={true} />
@@ -291,13 +324,14 @@ export default function Employees() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filteredEmployees.map((employee) => (
                     <EmployeeCard 
                       key={employee.id}
                       employee={employee}
                       onView={() => handleViewEmployee(employee.id)}
                       onEdit={() => handleEditEmployee(employee.id)}
+                      onDelete={() => handleDeleteEmployee(employee.id)}
                     />
                   ))}
                 </div>
@@ -318,6 +352,31 @@ export default function Employees() {
           )}
         </div>
       </div>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={!!employeeToDelete} onOpenChange={(open) => !open && setEmployeeToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Funcionário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{employeeToDelete?.name}</strong>?
+              <br />
+              Esta ação não pode ser desfeita e todos os dados relacionados serão perdidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDeleteEmployee}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteEmployee}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }

@@ -1,7 +1,9 @@
 import { X, Mail, Phone, Calendar, MapPin, User, Star, Clock } from "lucide-react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { formatDateBR, calculateYearsOfService } from "@/lib/utils";
 
 interface EmployeeWithDetails {
   id: string;
@@ -40,15 +42,15 @@ interface EmployeeDetailSidebarProps {
 }
 
 export function EmployeeDetailSidebar({ employee, isOpen, onClose }: EmployeeDetailSidebarProps) {
+  const [, setLocation] = useLocation();
+  
   if (!isOpen || !employee) return null;
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
-  };
+  const formatDate = formatDateBR;
+  const getYearsOfService = calculateYearsOfService;
 
-  const calculateYearsOfService = (joinDate: string) => {
-    const years = new Date().getFullYear() - new Date(joinDate).getFullYear();
-    return years;
+  const handleEditEmployee = () => {
+    setLocation(`/employees/edit/${employee.id}`);
   };
 
   return (
@@ -181,7 +183,7 @@ export function EmployeeDetailSidebar({ employee, isOpen, onClose }: EmployeeDet
                 <div>
                   <span className="text-slate-600">Tempo: </span>
                   <span className="font-medium text-slate-900" data-testid="employee-years-service">
-                    {calculateYearsOfService(employee.hireDate)} anos
+                    {getYearsOfService(employee.hireDate)} anos
                   </span>
                 </div>
               </div>
@@ -230,6 +232,7 @@ export function EmployeeDetailSidebar({ employee, isOpen, onClose }: EmployeeDet
             <Button 
               className="w-full text-xs sm:text-sm py-2" 
               size="sm"
+              onClick={handleEditEmployee}
               data-testid="edit-employee-button"
             >
               Editar Funcionário

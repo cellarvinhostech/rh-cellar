@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { User, Mail, Phone, Building, Calendar, Clock, Camera, Lock, Save, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Mail, Phone, Building, Calendar, Clock, Camera, Lock, Save, X, AlertTriangle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,9 @@ export default function Profile() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"profile" | "security">("profile");
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Detectar se é primeiro acesso
+  const isFirstAccess = authState.user?.first_access === null;
   
   const [profileData, setProfileData] = useState<UpdateProfileData>({
     name: authState.user?.name || "",
@@ -23,6 +26,13 @@ export default function Profile() {
     newPassword: "",
     confirmPassword: ""
   });
+
+  // Força aba de segurança no primeiro acesso
+  useEffect(() => {
+    if (isFirstAccess) {
+      setActiveTab("security");
+    }
+  }, [isFirstAccess]);
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,12 +65,23 @@ export default function Profile() {
       return;
     }
 
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A nova senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await changePassword(passwordData);
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       toast({
         title: "Senha alterada!",
-        description: "Sua senha foi alterada com sucesso.",
+        description: isFirstAccess 
+          ? "Bem-vindo! Sua senha foi definida com sucesso. Agora você pode usar todas as funcionalidades da plataforma."
+          : "Sua senha foi alterada com sucesso.",
       });
     } catch (error) {
       toast({
@@ -76,13 +97,34 @@ export default function Profile() {
   return (
     <MainLayout>
       <div className="h-full flex flex-col" data-testid="profile-page">
-        {/* Header */}
+        {/* Header com aviso de primeiro acesso */}
         <header className="bg-white px-6 py-6 border-b border-slate-200">
           <div className="max-w-4xl mx-auto">
+            {isFirstAccess && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start space-x-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-amber-800">
+                      Primeiro acesso detectado
+                    </h3>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Para sua segurança, você deve alterar sua senha antes de acessar outras funcionalidades da plataforma.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <h1 className="text-2xl font-bold text-slate-900" data-testid="profile-title">
-              Meu Perfil
+              {isFirstAccess ? "Bem-vindo ao RH Performance" : "Meu Perfil"}
             </h1>
-            <p className="text-slate-600">Gerencie suas informações pessoais e configurações de segurança</p>
+            <p className="text-slate-600">
+              {isFirstAccess 
+                ? "Configure sua senha para começar a usar a plataforma"
+                : "Gerencie suas informações pessoais e configurações de segurança"
+              }
+            </p>
           </div>
         </header>
 
@@ -94,30 +136,36 @@ export default function Profile() {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
               <div className="flex items-center space-x-6">
                 <div className="relative">
-                  <img
-                    src={authState.user.avatar}
-                    alt={authState.user.name}
-                    className="w-20 h-20 rounded-full object-cover ring-4 ring-purple-100"
-                    data-testid="user-avatar-large"
-                  />
-                  <button className="absolute bottom-0 right-0 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-md hover:bg-purple-700 transition-colors">
-                    <Camera className="w-4 h-4" />
+                  <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden">
+                    {authState.user.avatar ? (
+                      <img
+                        src={authState.user.avatar}
+                        alt={authState.user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-8 h-8 text-slate-400" />
+                    )}
+                  </div>
+                  <button className="absolute bottom-0 right-0 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white hover:bg-purple-700">
+                    <Camera className="w-3 h-3" />
                   </button>
                 </div>
-                
+
                 <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-slate-900" data-testid="user-name-large">
+                  <h2 className="text-xl font-semibold text-slate-900" data-testid="user-name">
                     {authState.user.name}
                   </h2>
-                  <p className="text-slate-600" data-testid="user-role-large">{authState.user.role}</p>
-                  <p className="text-sm text-slate-500">{authState.user.department}</p>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-sm text-slate-500">Último acesso</p>
-                  <p className="text-sm font-medium text-slate-900">
-                    {authState.user.lastLogin ? new Date(authState.user.lastLogin).toLocaleDateString("pt-BR") : "Nunca"}
+                  <p className="text-slate-600" data-testid="user-role">
+                    {authState.user.position} • {authState.user.department}
                   </p>
+                  <div className="flex items-center text-sm text-slate-500 mt-1">
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span>Último acesso</span>
+                    <span className="ml-1" data-testid="last-access">
+                      {authState.user.lastLogin ? new Date(authState.user.lastLogin).toLocaleDateString("pt-BR") : "Nunca"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -127,16 +175,22 @@ export default function Profile() {
               <div className="border-b border-slate-200">
                 <nav className="flex space-x-8 px-6">
                   <button
-                    onClick={() => setActiveTab("profile")}
+                    onClick={() => !isFirstAccess && setActiveTab("profile")}
+                    disabled={isFirstAccess}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       activeTab === "profile"
                         ? "border-primary text-primary"
-                        : "border-transparent text-slate-500 hover:text-slate-700"
+                        : isFirstAccess 
+                          ? "border-transparent text-slate-300 cursor-not-allowed"
+                          : "border-transparent text-slate-500 hover:text-slate-700"
                     }`}
                     data-testid="tab-profile"
                   >
                     <User className="w-4 h-4 inline mr-2" />
                     Informações Pessoais
+                    {isFirstAccess && (
+                      <Lock className="w-3 h-3 inline ml-1 text-slate-400" />
+                    )}
                   </button>
                   <button
                     onClick={() => setActiveTab("security")}
@@ -148,13 +202,16 @@ export default function Profile() {
                     data-testid="tab-security"
                   >
                     <Lock className="w-4 h-4 inline mr-2" />
-                    Segurança
+                    {isFirstAccess ? "Definir Senha" : "Segurança"}
+                    {isFirstAccess && (
+                      <div className="inline-block w-2 h-2 bg-red-500 rounded-full ml-1" />
+                    )}
                   </button>
                 </nav>
               </div>
 
               <div className="p-6">
-                {activeTab === "profile" ? (
+                {activeTab === "profile" && !isFirstAccess ? (
                   <div data-testid="profile-tab-content">
                     {isEditing ? (
                       <form onSubmit={handleProfileUpdate} className="space-y-6">
@@ -266,7 +323,7 @@ export default function Profile() {
                             <div>
                               <p className="text-sm text-slate-500">Data de entrada</p>
                               <p className="font-medium text-slate-900" data-testid="display-join-date">
-                                {new Date(authState.user.joinDate).toLocaleDateString("pt-BR")}
+                                {authState.user.joinDate ? new Date(authState.user.joinDate).toLocaleDateString("pt-BR") : "Não informado"}
                               </p>
                             </div>
                           </div>
@@ -284,60 +341,90 @@ export default function Profile() {
                   </div>
                 ) : (
                   <div data-testid="security-tab-content">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-6">Alterar senha</h3>
-                    
-                    <form onSubmit={handlePasswordChange} className="space-y-6 max-w-md">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Senha atual
-                        </label>
-                        <input
-                          type="password"
-                          value={passwordData.currentPassword}
-                          onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                          data-testid="input-current-password"
-                        />
-                      </div>
+                    <div className="max-w-md">
+                      {isFirstAccess && (
+                        <div className="mb-6">
+                          <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                            Defina sua senha de acesso
+                          </h3>
+                          <p className="text-sm text-slate-600">
+                            Por motivos de segurança, você deve criar uma nova senha para acessar a plataforma.
+                          </p>
+                        </div>
+                      )}
                       
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Nova senha
-                        </label>
-                        <input
-                          type="password"
-                          value={passwordData.newPassword}
-                          onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                          data-testid="input-new-password"
-                        />
-                      </div>
+                      {!isFirstAccess && (
+                        <h3 className="text-lg font-semibold text-slate-900 mb-6">Alterar senha</h3>
+                      )}
                       
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Confirmar nova senha
-                        </label>
-                        <input
-                          type="password"
-                          value={passwordData.confirmPassword}
-                          onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required
-                          data-testid="input-confirm-password"
-                        />
-                      </div>
+                      <form onSubmit={handlePasswordChange} className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            {isFirstAccess ? "Senha atual (temporária)" : "Senha atual"}
+                          </label>
+                          <input
+                            type="password"
+                            value={passwordData.currentPassword}
+                            onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                            required
+                            placeholder={isFirstAccess ? "Digite sua senha temporária" : "Digite sua senha atual"}
+                            data-testid="input-current-password"
+                          />
+                          {isFirstAccess && (
+                            <p className="text-xs text-slate-500 mt-1">
+                              Use a senha que foi enviada para você por e-mail ou fornecida pelo administrador.
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Nova senha
+                          </label>
+                          <input
+                            type="password"
+                            value={passwordData.newPassword}
+                            onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                            required
+                            minLength={6}
+                            placeholder="Digite sua nova senha"
+                            data-testid="input-new-password"
+                          />
+                          <p className="text-xs text-slate-500 mt-1">
+                            A senha deve ter pelo menos 6 caracteres.
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Confirmar nova senha
+                          </label>
+                          <input
+                            type="password"
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                            required
+                            placeholder="Confirme sua nova senha"
+                            data-testid="input-confirm-password"
+                          />
+                        </div>
 
-                      <button
-                        type="submit"
-                        disabled={authState.isLoading}
-                        className="btn-primary disabled:opacity-50"
-                        data-testid="button-change-password"
-                      >
-                        {authState.isLoading ? "Alterando..." : "Alterar senha"}
-                      </button>
-                    </form>
+                        <button
+                          type="submit"
+                          disabled={authState.isLoading}
+                          className="w-full btn-primary disabled:opacity-50"
+                          data-testid="button-change-password"
+                        >
+                          {authState.isLoading 
+                            ? (isFirstAccess ? "Definindo..." : "Alterando...") 
+                            : (isFirstAccess ? "Definir senha" : "Alterar senha")
+                          }
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 )}
               </div>

@@ -1,13 +1,22 @@
 export interface User {
   id: string;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   role: string;
-  avatar?: string;
-  department: string;
   phone?: string;
-  position: string;
-  joinDate: string;
+  department_id: string;
+  demartment_name: string;
+  created_at: string;
+  updated_at: string;
+  last_access?: string;
+  first_access?: string | null;
+  // Campos computados para compatibilidade
+  name?: string;
+  avatar?: string;
+  department?: string;
+  position?: string;
+  joinDate?: string;
   lastLogin?: string;
 }
 
@@ -45,4 +54,10 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  token: string;
+  user: User;
 }

@@ -88,34 +88,25 @@ export default function Settings() {
           route: "/hierarchy-levels"
         },
         {
-          id: "request-types",
-          name: "Tipos de Solicitações",
-          description: "Configure tipos de solicitações",
-          status: "development"
+          id: "directorates",
+          name: "Diretorias",
+          description: "Gerencie as diretorias da empresa",
+          status: "active",
+          route: "/directorates"
         },
         {
-          id: "sla-levels",
-          name: "Níveis de Resposta (SLA)",
-          description: "Configure níveis de resposta (sla)",
-          status: "development"
+          id: "shifts",
+          name: "Turnos",
+          description: "Configure os turnos de trabalho",
+          status: "active",
+          route: "/shifts"
         },
         {
-          id: "status",
-          name: "Status dos Processos",
-          description: "Configure status dos processos",
-          status: "development"
-        },
-        {
-          id: "priorities",
-          name: "Prioridades",
-          description: "Configure prioridades dos processos",
-          status: "development"
-        },
-        {
-          id: "workdays",
-          name: "Jornadas de Trabalho",
-          description: "Configure jornadas de trabalho",
-          status: "development"
+          id: "units",
+          name: "Unidades",
+          description: "Gerencie as unidades da empresa",
+          status: "active",
+          route: "/units"
         }
       ]
     }

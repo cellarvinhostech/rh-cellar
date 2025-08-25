@@ -1,19 +1,8 @@
 import { useState, useEffect } from "react";
 import type { User, LoginCredentials, ResetPasswordRequest, UpdateProfileData, ChangePasswordData, AuthState } from "@/types/auth";
-
-// Mock user data
-const mockUser: User = {
-  id: "1",
-  name: "Ana Silva",
-  email: "ana.silva@empresa.com",
-  role: "Gerente RH",
-  avatar: "https://pixabay.com/get/gadfaeda8f45dac1f50485b9f6697d3ce0712f46d6e1d863b67553e7660784f8c9f44e982174e664fa7ca6fc89ff1104b2ebff8e1df9df0aeb75e7993ce97e90b_1280.jpg",
-  department: "Recursos Humanos",
-  phone: "(11) 99999-9999",
-  position: "Gerente de RH",
-  joinDate: "2022-01-15",
-  lastLogin: new Date().toISOString()
-};
+import { loginAPI, changePasswordAPI } from "@/utils/api";
+import { setCookie, getCookie, deleteCookie } from "@/utils/cookies";
+import { API_CONFIG } from "@/utils/constants";
 
 export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({
@@ -24,15 +13,35 @@ export function useAuth() {
   });
 
   useEffect(() => {
-    // Simulate checking for existing session
-    const storedUser = localStorage.getItem("hr_user");
-    if (storedUser) {
-      setAuthState({
-        user: JSON.parse(storedUser),
-        isAuthenticated: true,
-        isLoading: false,
-        error: null
-      });
+    // Verificar se existe sessão ativa
+    const storedUser = localStorage.getItem(API_CONFIG.STORAGE.USER_KEY);
+    const token = getCookie(API_CONFIG.STORAGE.TOKEN_COOKIE);
+    
+    if (storedUser && token) {
+      try {
+        const user = JSON.parse(storedUser);
+        // Adicionar campos computados para compatibilidade
+        const userWithComputed = {
+          ...user,
+          name: `${user.first_name} ${user.last_name}`,
+          department: user.demartment_name,
+          position: user.role,
+          joinDate: user.created_at.split(' ')[0],
+          lastLogin: user.last_access
+        };
+        
+        setAuthState({
+          user: userWithComputed,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null
+        });
+      } catch (error) {
+        // Se houver erro ao parsear, limpar dados
+        localStorage.removeItem(API_CONFIG.STORAGE.USER_KEY);
+        deleteCookie(API_CONFIG.STORAGE.TOKEN_COOKIE);
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+      }
     } else {
       setAuthState(prev => ({ ...prev, isLoading: false }));
     }
@@ -42,25 +51,30 @@ export function useAuth() {
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await loginAPI(credentials);
       
-      // Simple validation
-      if (credentials.email === "ana.silva@empresa.com" && credentials.password === "123456") {
-        const updatedUser = { ...mockUser, lastLogin: new Date().toISOString() };
-        
-        // Always store user data for session persistence
-        localStorage.setItem("hr_user", JSON.stringify(updatedUser));
-        
-        setAuthState({
-          user: updatedUser,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null
-        });
-      } else {
-        throw new Error("Credenciais inválidas");
-      }
+      // Salvar token como cookie
+      setCookie(API_CONFIG.STORAGE.TOKEN_COOKIE, response.token, credentials.rememberMe ? 30 : 1);
+      
+      // Adicionar campos computados para compatibilidade
+      const userWithComputed = {
+        ...response.user,
+        name: `${response.user.first_name} ${response.user.last_name}`,
+        department: response.user.demartment_name,
+        position: response.user.role,
+        joinDate: response.user.created_at.split(' ')[0],
+        lastLogin: response.user.last_access
+      };
+      
+      // Salvar usuário no localStorage
+      localStorage.setItem(API_CONFIG.STORAGE.USER_KEY, JSON.stringify(response.user));
+      
+      setAuthState({
+        user: userWithComputed,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null
+      });
     } catch (error) {
       setAuthState(prev => ({
         ...prev,
@@ -72,7 +86,8 @@ export function useAuth() {
   };
 
   const logout = () => {
-    localStorage.removeItem("hr_user");
+    localStorage.removeItem(API_CONFIG.STORAGE.USER_KEY);
+    deleteCookie(API_CONFIG.STORAGE.TOKEN_COOKIE);
     setAuthState({
       user: null,
       isAuthenticated: false,
@@ -85,7 +100,7 @@ export function useAuth() {
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      // Simulate API call
+      // TODO: Implementar API de reset de senha
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       setAuthState(prev => ({ ...prev, isLoading: false }));
@@ -103,11 +118,11 @@ export function useAuth() {
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      // Simulate API call
+      // TODO: Implementar API de atualização de perfil
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const updatedUser = { ...authState.user!, ...data };
-      localStorage.setItem("hr_user", JSON.stringify(updatedUser));
+      localStorage.setItem(API_CONFIG.STORAGE.USER_KEY, JSON.stringify(updatedUser));
       
       setAuthState(prev => ({
         ...prev,
@@ -128,10 +143,39 @@ export function useAuth() {
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await changePasswordAPI({
+        current_password: data.currentPassword,
+        new_password: data.newPassword,
+        confirm_password: data.confirmPassword
+      });
       
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      // Se foi bem-sucedido e era primeiro acesso, atualizar o usuário
+      if (authState.user?.first_access === null) {
+        const updatedUser = {
+          ...authState.user,
+          first_access: new Date().toISOString()
+        };
+        
+        // Atualizar tanto o objeto computado quanto o localStorage
+        const userWithComputed = {
+          ...updatedUser,
+          name: `${updatedUser.first_name} ${updatedUser.last_name}`,
+          department: updatedUser.demartment_name,
+          position: updatedUser.role,
+          joinDate: updatedUser.created_at.split(' ')[0],
+          lastLogin: updatedUser.last_access
+        };
+        
+        localStorage.setItem(API_CONFIG.STORAGE.USER_KEY, JSON.stringify(updatedUser));
+        
+        setAuthState(prev => ({
+          ...prev,
+          user: userWithComputed,
+          isLoading: false
+        }));
+      } else {
+        setAuthState(prev => ({ ...prev, isLoading: false }));
+      }
     } catch (error) {
       setAuthState(prev => ({
         ...prev,

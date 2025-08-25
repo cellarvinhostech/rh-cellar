@@ -1,42 +1,44 @@
 import { useState } from "react";
-import { Plus, Building, Users, Edit, Trash2 } from "lucide-react";
+import { Plus, Building, Users, Edit, Trash2, Loader2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { useHRData } from "@/hooks/use-hr-data";
+import { useDepartmentsAPI } from "@/hooks/use-departments-api";
 import { useToast } from "@/hooks/use-toast";
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription } from "@/components/ui/modal";
 
 export default function Departments() {
-  const { departments, positions, getEmployeesWithDetails, createDepartment, updateDepartment, deleteDepartment } = useHRData();
+  const { 
+    departments, 
+    loading, 
+    createDepartment, 
+    updateDepartment, 
+    deleteDepartment 
+  } = useDepartmentsAPI();
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<any>(null);
-  const [formData, setFormData] = useState({ name: "", description: "" });
+  const [formData, setFormData] = useState({ name: "" });
 
-  const employees = getEmployeesWithDetails();
-
-  const getDepartmentStats = (departmentId: string) => {
-    const departmentEmployees = employees.filter(emp => emp.departmentId === departmentId);
-    const departmentPositions = positions.filter(pos => pos.departmentId === departmentId);
-    
+  const getDepartmentStats = (department: any) => {
+    // Usamos as estatísticas que vêm diretamente da API
     return {
-      employeeCount: departmentEmployees.length,
-      positionCount: departmentPositions.length
+      employeeCount: department.department_users || 0,
+      positionCount: department.department_cargos || 0
     };
   };
 
   const handleCreateDepartment = () => {
     setEditingDepartment(null);
-    setFormData({ name: "", description: "" });
+    setFormData({ name: "" });
     setIsModalOpen(true);
   };
 
   const handleEditDepartment = (department: any) => {
     setEditingDepartment(department);
-    setFormData({ name: department.name, description: department.description || "" });
+    setFormData({ name: department.name });
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
@@ -50,33 +52,22 @@ export default function Departments() {
 
     try {
       if (editingDepartment) {
-        updateDepartment(editingDepartment.id, formData);
-        toast({
-          title: "Sucesso",
-          description: "Departamento atualizado com sucesso.",
-        });
+        await updateDepartment(editingDepartment.id, formData);
       } else {
-        createDepartment(formData);
-        toast({
-          title: "Sucesso",
-          description: "Departamento criado com sucesso.",
-        });
+        await createDepartment(formData);
       }
       
       setIsModalOpen(false);
-      setFormData({ name: "", description: "" });
+      setFormData({ name: "" });
       setEditingDepartment(null);
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao salvar departamento.",
-        variant: "destructive"
-      });
+      // O erro já é tratado no hook
+      console.error("Erro ao salvar departamento:", error);
     }
   };
 
-  const handleDeleteDepartment = (departmentId: string) => {
-    const stats = getDepartmentStats(departmentId);
+  const handleDeleteDepartment = async (department: any) => {
+    const stats = getDepartmentStats(department);
     
     if (stats.employeeCount > 0) {
       toast({
@@ -88,11 +79,12 @@ export default function Departments() {
     }
 
     if (confirm("Tem certeza que deseja excluir este departamento?")) {
-      deleteDepartment(departmentId);
-      toast({
-        title: "Sucesso",
-        description: "Departamento excluído com sucesso.",
-      });
+      try {
+        await deleteDepartment(department.id);
+      } catch (error) {
+        // O erro já é tratado no hook
+        console.error("Erro ao excluir departamento:", error);
+      }
     }
   };
 
@@ -121,7 +113,12 @@ export default function Departments() {
 
         {/* Departments List */}
         <div className="flex-1 overflow-auto p-6">
-          {departments.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-slate-600">Carregando departamentos...</span>
+            </div>
+          ) : departments.length === 0 ? (
             <div className="text-center py-12" data-testid="no-departments-message">
               <Building className="w-12 h-12 mx-auto mb-4 text-slate-400" />
               <h3 className="text-lg font-medium text-slate-900 mb-2">Nenhum departamento cadastrado</h3>
@@ -130,7 +127,7 @@ export default function Departments() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="departments-grid">
               {departments.map((department) => {
-                const stats = getDepartmentStats(department.id);
+                const stats = getDepartmentStats(department);
                 
                 return (
                   <div 
@@ -150,14 +147,9 @@ export default function Departments() {
                           >
                             {department.name}
                           </h3>
-                          {department.description && (
-                            <p 
-                              className="text-sm text-slate-600 mt-1"
-                              data-testid={`department-description-${department.id}`}
-                            >
-                              {department.description}
-                            </p>
-                          )}
+                          <p className="text-xs text-slate-500 mt-1">
+                            Criado em {new Date(department.created_at).toLocaleDateString('pt-BR')}
+                          </p>
                         </div>
                       </div>
                       
@@ -171,7 +163,7 @@ export default function Departments() {
                         </button>
                         <button
                           className="p-2 text-slate-400 hover:text-red-600"
-                          onClick={() => handleDeleteDepartment(department.id)}
+                          onClick={() => handleDeleteDepartment(department)}
                           data-testid={`delete-department-${department.id}`}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -239,18 +231,6 @@ export default function Departments() {
                   placeholder="Digite o nome do departamento"
                   required
                   data-testid="department-name-input"
-                />
-              </div>
-              
-              <div>
-                <label className="form-label">Descrição (opcional)</label>
-                <textarea
-                  className="form-textarea"
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Digite uma descrição para o departamento"
-                  data-testid="department-description-input"
                 />
               </div>
               

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Mail, ArrowLeft, BarChart3, CheckCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -11,6 +11,30 @@ export default function ForgotPassword() {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Redirecionar se já estiver autenticado
+  useEffect(() => {
+    if (!authState.isLoading && authState.isAuthenticated) {
+      navigate("/");
+    }
+  }, [authState.isLoading, authState.isAuthenticated, navigate]);
+
+  // Mostrar loading enquanto verifica autenticação
+  if (authState.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Não renderizar se já estiver autenticado
+  if (authState.isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
