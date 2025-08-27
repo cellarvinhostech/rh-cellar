@@ -69,6 +69,11 @@ export function useAuth() {
       // Salvar usuário no localStorage
       localStorage.setItem(API_CONFIG.STORAGE.USER_KEY, JSON.stringify(response.user));
       
+      // Salvar avaliações pendentes se existirem
+      if (response.pending_evaluations) {
+        localStorage.setItem('pending_evaluations', JSON.stringify(response.pending_evaluations));
+      }
+      
       setAuthState({
         user: userWithComputed,
         isAuthenticated: true,
@@ -87,6 +92,7 @@ export function useAuth() {
 
   const logout = () => {
     localStorage.removeItem(API_CONFIG.STORAGE.USER_KEY);
+    localStorage.removeItem('pending_evaluations');
     deleteCookie(API_CONFIG.STORAGE.TOKEN_COOKIE);
     setAuthState({
       user: null,
