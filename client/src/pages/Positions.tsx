@@ -5,6 +5,8 @@ import { usePositionsAPI } from "@/hooks/use-positions-api";
 import { useDepartmentsAPI } from "@/hooks/use-departments-api";
 import { useHierarchyLevelsAPI } from "@/hooks/use-hierarchy-levels-api";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription } from "@/components/ui/modal";
 
 export default function Positions() {
@@ -18,6 +20,7 @@ export default function Positions() {
   const { departments, loading: departmentsLoading } = useDepartmentsAPI();
   const { hierarchyLevels, loading: hierarchyLevelsLoading } = useHierarchyLevelsAPI();
   const { toast } = useToast();
+  const { confirm, confirmState } = useConfirm();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPosition, setEditingPosition] = useState<any>(null);
@@ -79,7 +82,15 @@ export default function Positions() {
   };
 
   const handleDeletePosition = async (position: any) => {
-    if (confirm("Tem certeza que deseja excluir este cargo?")) {
+    const confirmed = await confirm({
+      title: "Excluir Cargo",
+      message: `Tem certeza que deseja excluir o cargo "${position.name}"? Esta ação não pode ser desfeita.`,
+      confirmText: "Excluir",
+      cancelText: "Cancelar",
+      variant: "danger"
+    });
+
+    if (confirmed) {
       try {
         await deletePosition(position.id);
       } catch (error) {
@@ -281,6 +292,18 @@ export default function Positions() {
             </form>
           </ModalContent>
         </Modal>
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          isOpen={confirmState.isOpen}
+          title={confirmState.title}
+          message={confirmState.message}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          variant={confirmState.variant}
+          onConfirm={confirmState.onConfirm}
+          onCancel={confirmState.onCancel}
+        />
       </div>
     </MainLayout>
   );

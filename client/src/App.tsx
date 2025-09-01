@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useParams } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,8 +21,10 @@ import Units from "@/pages/Units";
 import Settings from "@/pages/Settings";
 import Forms from "@/pages/Forms";
 import Evaluations from "@/pages/Evaluations";
+import PendingEvaluations from "@/pages/PendingEvaluations";
 import EvaluationDetail from "@/pages/EvaluationDetail";
 import EvaluationEdit from "@/pages/EvaluationEdit";
+import EvaluationForm from "@/pages/EvaluationForm";
 import Login from "@/pages/Login";
 import ForgotPassword from "@/pages/ForgotPassword";
 import Profile from "@/pages/Profile";
@@ -131,6 +133,20 @@ function Router() {
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
+      <Route path="/pending-evaluations">
+        <ProtectedRoute>
+          <FirstAccessGuard>
+            <PendingEvaluations />
+          </FirstAccessGuard>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/evaluation/:evaluationId/form">
+        <ProtectedRoute>
+          <FirstAccessGuard>
+            <EvaluationFormWrapper />
+          </FirstAccessGuard>
+        </ProtectedRoute>
+      </Route>
       <Route path="/evaluations/:id">
         <ProtectedRoute>
           <FirstAccessGuard>
@@ -161,6 +177,17 @@ function Router() {
       <Route component={NotFound} />
     </Switch>
   );
+}
+
+function EvaluationFormWrapper() {
+  const params = useParams();
+  const evaluationId = params.evaluationId;
+  
+  if (!evaluationId) {
+    return <div>ID da avaliação não encontrado</div>;
+  }
+  
+  return <EvaluationForm evaluationId={evaluationId} />;
 }
 
 function App() {

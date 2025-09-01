@@ -13,7 +13,7 @@ export function PendingEvaluationsNotification() {
   }
 
   const handleEvaluateClick = () => {
-    setLocation("/evaluations");
+    setLocation("/pending-evaluations");
   };
 
   return (

@@ -10,8 +10,15 @@ interface PendingEvaluationSummary {
   evaluationName: string;
   evaluatedName: string;
   evaluatedId: string;
+  department_name?: string;
   status: 'pending' | 'in_progress' | 'completed';
   relacionamento: 'leader' | 'teammate' | 'other';
+  avaliacao_id: string;
+  avaliacao_name: string;
+  avaliacao_description?: string;
+  avaliacao_start_date: string;
+  avaliacao_end_date: string;
+  avaliacao_form_id: string;
 }
 
 export function usePendingEvaluations() {
@@ -19,6 +26,20 @@ export function usePendingEvaluations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { authState } = useAuth();
+
+  const isEvaluationActive = (evaluation: PendingEvaluationSummary) => {
+    const now = new Date();
+    const startDate = evaluation.avaliacao_start_date ? new Date(evaluation.avaliacao_start_date) : null;
+    const endDate = evaluation.avaliacao_end_date ? new Date(evaluation.avaliacao_end_date) : null;
+
+    if (!startDate) return true;
+
+    if (endDate && now > endDate) return false;
+
+    if (now < startDate) return false;
+
+    return true;
+  };
 
   const fetchPendingEvaluations = useCallback(async () => {
     if (!authState.user?.id) {
@@ -31,24 +52,30 @@ export function usePendingEvaluations() {
       setError(null);
 
       const storedPendingEvaluations = localStorage.getItem('pending_evaluations');
-      
+
       if (storedPendingEvaluations) {
-        console.log('Usando dados das avaliações do localStorage');
         const pendingEvaluationsData = JSON.parse(storedPendingEvaluations);
-        
+
         if (Array.isArray(pendingEvaluationsData)) {
           const pendingEvaluationsSummary: PendingEvaluationSummary[] = pendingEvaluationsData.map((evaluation: any) => {
-            const evaluatedName = evaluation.first_name && evaluation.last_name 
+            const evaluatedName = evaluation.first_name && evaluation.last_name
               ? `${evaluation.first_name} ${evaluation.last_name}`.trim()
               : 'Funcionário';
 
             return {
               id: evaluation.id || '',
-              evaluationName: 'Avaliação de Performance Q3 2025',
+              evaluationName: evaluation.avaliacao_name || 'Avaliação sem nome',
               evaluatedName,
               evaluatedId: evaluation.avaliado_id,
+              department_name: evaluation.department_name,
               status: evaluation.status,
-              relacionamento: evaluation.relacionamento
+              relacionamento: evaluation.relacionamento,
+              avaliacao_id: evaluation.avaliacao_id,
+              avaliacao_name: evaluation.avaliacao_name,
+              avaliacao_description: evaluation.avaliacao_description,
+              avaliacao_start_date: evaluation.avaliacao_start_date,
+              avaliacao_end_date: evaluation.avaliacao_end_date,
+              avaliacao_form_id: evaluation.avaliacao_form_id,
             };
           });
 
@@ -58,7 +85,6 @@ export function usePendingEvaluations() {
         }
       }
 
-      console.log('Fazendo requisição para a API de avaliações');
       const response = await authenticatedFetch(EVALUATORS_API_URL, {
         method: 'POST',
         body: JSON.stringify({
@@ -71,24 +97,27 @@ export function usePendingEvaluations() {
       }
 
       const data = await response.json();
-      console.log('Dados das avaliações pendentes - RAW:', data);
-      console.log('data.success:', data.success);
-      console.log('data.pending_evaluations:', data.pending_evaluations);
-      console.log('Array.isArray(data.pending_evaluations):', Array.isArray(data.pending_evaluations));
 
       if (data.success && Array.isArray(data.pending_evaluations)) {
         const pendingEvaluationsSummary: PendingEvaluationSummary[] = data.pending_evaluations.map((evaluation: any) => {
-          const evaluatedName = evaluation.first_name && evaluation.last_name 
+          const evaluatedName = evaluation.first_name && evaluation.last_name
             ? `${evaluation.first_name} ${evaluation.last_name}`.trim()
             : 'Funcionário';
 
           return {
             id: evaluation.id || '',
-            evaluationName: 'Avaliação de Performance Q3 2025',
+            evaluationName: evaluation.avaliacao_name || 'Avaliação sem nome',
             evaluatedName,
             evaluatedId: evaluation.avaliado_id,
+            department_name: evaluation.department_name,
             status: evaluation.status,
-            relacionamento: evaluation.relacionamento
+            relacionamento: evaluation.relacionamento,
+            avaliacao_id: evaluation.avaliacao_id,
+            avaliacao_name: evaluation.avaliacao_name,
+            avaliacao_description: evaluation.avaliacao_description,
+            avaliacao_start_date: evaluation.avaliacao_start_date,
+            avaliacao_end_date: evaluation.avaliacao_end_date,
+            avaliacao_form_id: evaluation.avaliacao_form_id,
           };
         });
 
@@ -109,11 +138,13 @@ export function usePendingEvaluations() {
     fetchPendingEvaluations();
   }, [fetchPendingEvaluations]);
 
+  const activeEvaluations = pendingEvaluations.filter(isEvaluationActive);
+
   return {
-    pendingEvaluations,
+    pendingEvaluations: activeEvaluations,
     loading,
     error,
     refetch: fetchPendingEvaluations,
-    pendingCount: pendingEvaluations.length
+    pendingCount: activeEvaluations.length
   };
 }
