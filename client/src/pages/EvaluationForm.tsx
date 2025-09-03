@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, User, Star, ChevronLeft, ChevronRight, Save, Send, FileText } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useEvaluationQuestions } from "@/hooks/use-evaluation-questions";
 import { usePendingEvaluations } from "@/hooks/use-pending-evaluations";
+import { useEvaluationForm } from "@/hooks/use-evaluation-form";
+import { useConfirm } from "@/hooks/use-confirm";
+import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 interface EvaluationFormProps {
   evaluationId: string;
@@ -16,22 +21,35 @@ interface PersonToEvaluate {
   relacionamento: string;
 }
 
-interface QuestionResponse {
-  questionId: string;
-  personId: string;
-  response: any;
-}
-
 export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
   const [, setLocation] = useLocation();
+  const { authState } = useAuth();
+  const { confirm, confirmState } = useConfirm();
+  const { toast } = useToast();
   const { formData, loading, error, fetchEvaluationQuestions } = useEvaluationQuestions();
   const { pendingEvaluations } = usePendingEvaluations();
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [responses, setResponses] = useState<QuestionResponse[]>([]);
   const [peopleToEvaluate, setPeopleToEvaluate] = useState<PersonToEvaluate[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const {
+    getPersonResponse: getResponse,
+    handleResponse: handleFormResponse,
+    submitForm,
+    validateForm,
+    saveDraft,
+    loading: formLoading,
+    autoSaving,
+    lastSaved,
+    saveFormProgress
+  } = useEvaluationForm(
+    evaluationId,
+    formData?.form?.id || '',
+    authState?.user?.id || '',
+    peopleToEvaluate
+  );
 
   useEffect(() => {
     fetchEvaluationQuestions(evaluationId);
@@ -56,93 +74,57 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
     }
   }, [pendingEvaluations, evaluationId]);
 
+  // Auto-save a cada 30 segundos
+  useEffect(() => {
+    const autoSaveInterval = setInterval(() => {
+      if (!autoSaving && !formLoading) {
+        saveDraft().catch(error => {
+          console.error('Erro no auto-save:', error);
+        });
+      }
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(autoSaveInterval);
+  }, [saveDraft, autoSaving, formLoading]);
+
   const currentQuestion = formData?.questions[currentQuestionIndex];
   const totalQuestions = formData?.questions.length || 0;
 
+  // Wrapper para handleResponse com questionId
   const handleResponse = (personId: string, response: any) => {
     if (!currentQuestion) return;
-
-    setResponses(prev => {
-      const existingIndex = prev.findIndex(
-        r => r.questionId === currentQuestion.id && r.personId === personId
-      );
-
-      if (existingIndex >= 0) {
-        const newResponses = [...prev];
-        newResponses[existingIndex] = {
-          questionId: currentQuestion.id,
-          personId,
-          response
-        };
-        return newResponses;
-      } else {
-        return [...prev, {
-          questionId: currentQuestion.id,
-          personId,
-          response
-        }];
-      }
-    });
+    handleFormResponse(personId, currentQuestion.id, response);
   };
 
+  // Wrapper para getPersonResponse com questionId
   const getPersonResponse = (personId: string) => {
-    if (!currentQuestion) return null;
-    return responses.find(
-      r => r.questionId === currentQuestion.id && r.personId === personId
-    )?.response;
+    if (!currentQuestion) return '';
+    return getResponse(personId, currentQuestion.id);
   };
 
+  // Validar questão atual usando o hook
   const validateCurrentQuestion = () => {
-    const currentQuestion = formData?.questions[currentQuestionIndex];
-    if (!currentQuestion || !currentQuestion.required || currentQuestion.type === 'section') {
+    if (!currentQuestion) return true;
+    if (!currentQuestion.required || currentQuestion.type === 'section') {
       return true;
     }
-    
-    const errors: string[] = [];
-    
-    for (const person of peopleToEvaluate) {
-      const response = responses.find(
-        r => r.questionId === currentQuestion.id && r.personId === person.id
-      )?.response;
-      
-      if (currentQuestion.type === 'rating' && (!response || response === '0')) {
-        errors.push(`Avaliação obrigatória não preenchida para ${person.name}`);
-      }
-      
-      if (currentQuestion.type === 'select' && !response) {
-        errors.push(`Seleção obrigatória não preenchida para ${person.name}`);
-      }
-      
-      if ((currentQuestion.type === 'text' || currentQuestion.type === 'textarea') && 
-          (!response || response.trim().length === 0)) {
-        errors.push(`Texto obrigatório não preenchido para ${person.name}`);
-      }
-    }
-    
-    setValidationErrors(errors);
-    return errors.length === 0;
+
+    const validation = validateForm([currentQuestion.id]);
+    setValidationErrors(validation.missingResponses);
+    return validation.isValid;
   };
+
+  // Validar todas as questões obrigatórias
   const validateAllRequiredQuestions = () => {
     if (!formData?.questions) return false;
     
-    const errors: string[] = [];
+    const requiredQuestions = formData.questions
+      .filter(q => q.required && q.type !== 'section')
+      .map(q => q.id);
     
-    formData.questions.forEach((question, index) => {
-      if (question.required && question.type !== 'section') {
-        for (const person of peopleToEvaluate) {
-          const response = responses.find(
-            r => r.questionId === question.id && r.personId === person.id
-          )?.response;
-          
-          if (!response || response === '' || response === null || response === undefined) {
-            errors.push(`Questão ${index + 1} ("${question.name}") obrigatória não respondida para ${person.name}`);
-          }
-        }
-      }
-    });
-    
-    setValidationErrors(errors);
-    return errors.length === 0;
+    const validation = validateForm(requiredQuestions);
+    setValidationErrors(validation.missingResponses);
+    return validation.isValid;
   };
 
   const nextQuestion = () => {
@@ -167,17 +149,51 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
 
   const handleSubmit = async () => {
     if (!validateAllRequiredQuestions()) {
-      alert('Por favor, preencha todos os campos obrigatórios antes de enviar a avaliação.');
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios antes de enviar a avaliação.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Usar o hook de confirmação customizado
+    const confirmed = await confirm({
+      title: 'Finalizar Avaliação',
+      message: 'Tem certeza de que deseja finalizar esta avaliação? Esta ação não pode ser desfeita.',
+      confirmText: 'Finalizar',
+      cancelText: 'Cancelar',
+      variant: 'warning'
+    });
+    
+    if (!confirmed) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      alert('Avaliação enviada com sucesso!');
-      setLocation('/pending-evaluations');
+      const result = await submitForm();
+      if (result.success) {
+        toast({
+          title: "Sucesso!",
+          description: result.message || "Avaliação enviada com sucesso!",
+          variant: "default",
+        });
+        setLocation('/pending-evaluations');
+      } else {
+        toast({
+          title: "Erro",
+          description: result.message || "Erro ao enviar avaliação. Tente novamente.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Erro ao enviar avaliação:', error);
-      alert('Erro ao enviar avaliação. Tente novamente.');
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar avaliação. Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -229,20 +245,35 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
 
       case 'rating':
         return (
-          <div className="flex space-x-2">
-            {currentQuestion.options?.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => handleResponse(person.id, option)}
-                className={`px-3 py-2 text-sm rounded-md transition-colors ${
-                  currentResponse === option
-                    ? 'bg-primary text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                {option}
-              </button>
-            ))}
+          <div className="flex flex-col items-center space-y-4">
+            <div className="flex space-x-7">
+              {currentQuestion.options?.map((option, index) => {
+                const isSelected = currentResponse === option;
+                return (
+                  <div key={index} className="flex flex-col items-center">
+                    <button
+                      onClick={() => handleResponse(person.id, option)}
+                      className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+                        isSelected
+                          ? 'bg-yellow-100 border-yellow-400'
+                          : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Star
+                        className={`w-8 h-8 ${
+                          isSelected
+                            ? 'text-yellow-500 fill-yellow-500'
+                            : 'text-slate-400'
+                        }`}
+                      />
+                    </button>
+                    <span className="text-xs text-slate-600 mt-2 text-center font-medium">
+                      {option}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         );
 
@@ -467,13 +498,12 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
 
           <div className="flex space-x-3">
             <button
-              onClick={() => {
-                // Salvar rascunho
-              }}
-              className="flex items-center space-x-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-600 hover:text-slate-800 hover:border-slate-400 transition-colors"
+              onClick={saveDraft}
+              disabled={autoSaving}
+              className="flex items-center space-x-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-600 hover:text-slate-800 hover:border-slate-400 transition-colors disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              <span>Salvar Rascunho</span>
+              <span>{autoSaving ? 'Salvando...' : 'Salvar Rascunho'}</span>
             </button>
 
             {currentQuestionIndex === totalQuestions - 1 ? (
@@ -498,6 +528,18 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
           </div>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
+      />
     </MainLayout>
   );
 }
