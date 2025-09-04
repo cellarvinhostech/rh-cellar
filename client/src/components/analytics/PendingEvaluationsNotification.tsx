@@ -1,11 +1,12 @@
 import React from "react";
 import { Bell, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { usePendingEvaluations } from "@/hooks/use-pending-evaluations";
+import { usePendingEvaluationsApi } from "@/hooks/use-pending-evaluations-api";
 import { useLocation } from "wouter";
 
 export function PendingEvaluationsNotification() {
-  const { pendingCount, loading } = usePendingEvaluations();
+  const { pendingEvaluations, loading } = usePendingEvaluationsApi();
+  const pendingCount = pendingEvaluations?.length || 0;
   const [, setLocation] = useLocation();
 
   if (loading || pendingCount === 0) {

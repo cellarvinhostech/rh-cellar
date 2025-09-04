@@ -74,7 +74,6 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
     }
   }, [pendingEvaluations, evaluationId]);
 
-  // Auto-save a cada 30 segundos
   useEffect(() => {
     const autoSaveInterval = setInterval(() => {
       if (!autoSaving && !formLoading) {
@@ -82,7 +81,7 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
           console.error('Erro no auto-save:', error);
         });
       }
-    }, 30000); // 30 segundos
+    }, 30000);
 
     return () => clearInterval(autoSaveInterval);
   }, [saveDraft, autoSaving, formLoading]);
@@ -90,19 +89,16 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
   const currentQuestion = formData?.questions[currentQuestionIndex];
   const totalQuestions = formData?.questions.length || 0;
 
-  // Wrapper para handleResponse com questionId
   const handleResponse = (personId: string, response: any) => {
     if (!currentQuestion) return;
     handleFormResponse(personId, currentQuestion.id, response);
   };
 
-  // Wrapper para getPersonResponse com questionId
   const getPersonResponse = (personId: string) => {
     if (!currentQuestion) return '';
     return getResponse(personId, currentQuestion.id);
   };
 
-  // Validar questão atual usando o hook
   const validateCurrentQuestion = () => {
     if (!currentQuestion) return true;
     if (!currentQuestion.required || currentQuestion.type === 'section') {
@@ -114,7 +110,6 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
     return validation.isValid;
   };
 
-  // Validar todas as questões obrigatórias
   const validateAllRequiredQuestions = () => {
     if (!formData?.questions) return false;
     

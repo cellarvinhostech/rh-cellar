@@ -79,16 +79,12 @@ export const useEvaluationResponsesApi = () => {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Resposta do servidor:', errorText);
                 throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
             }
 
-            // Verificar se a resposta tem conteúdo
             const responseText = await response.text();
-            console.log('Resposta raw do servidor:', responseText);
 
             if (!responseText.trim()) {
-                // Para operações readAll, resposta vazia pode ser válida (sem dados salvos)
                 if (payload.operation === 'readAll') {
                     return {
                         success: true,
@@ -97,13 +93,11 @@ export const useEvaluationResponsesApi = () => {
                     };
                 }
 
-                // Para operações de create/update, resposta vazia pode indicar sucesso silencioso
                 if (payload.operation === 'create' || payload.operation === 'update') {
-                    console.warn('Resposta vazia do servidor para operação:', payload.operation);
                     return {
                         success: true,
                         message: 'Operação realizada com sucesso',
-                        data: { id: null } // Retorna um ID nulo que será tratado posteriormente
+                        data: { id: null }
                     };
                 }
 
@@ -114,17 +108,12 @@ export const useEvaluationResponsesApi = () => {
             try {
                 data = JSON.parse(responseText);
             } catch (parseError) {
-                console.error('Erro ao fazer parse do JSON:', responseText);
                 throw new Error('Resposta inválida do servidor');
             }
 
-            // Verificar se é array (resposta do readAll)
             if (Array.isArray(data)) {
-                console.log('Processando array de respostas do readAll');
-                // Processar array de objetos do N8N
                 const processedData = data.map(item => {
                     if (item.success && item.data) {
-                        // Fazer parse do campo data se for string
                         const parsedData = typeof item.data === 'string' ? JSON.parse(item.data) : item.data;
                         return parsedData;
                     }
@@ -138,7 +127,6 @@ export const useEvaluationResponsesApi = () => {
                 };
             }
 
-            // Verificar formato padrão para outras operações
             if (!data.success) {
                 throw new Error(data.message || 'Erro na operação');
             }
@@ -174,7 +162,6 @@ export const useEvaluationResponsesApi = () => {
             data
         };
 
-        console.log('Payload UPDATE completo:', payload);
         return await makeRequest(payload);
     };
 
@@ -198,9 +185,7 @@ export const useEvaluationResponsesApi = () => {
             }
         };
 
-        console.log('Enviando payload para readAll:', payload);
         const result = await makeRequest(payload);
-        console.log('Resposta do readAll:', result);
         return result;
     };
 
@@ -218,7 +203,7 @@ export const useEvaluationResponsesApi = () => {
     };
 
     // 6. SUBMITEVAL - Finalizar avaliação
-    const submitEvaluation = async (avaliador_id: string, avaliacao_id: string) => {
+    const submitEvaluation = async (avaliador_id: string, avaliacao_id: string, avaliados_ids?: string[]) => {
         const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
         const payload = {
             operation: 'submitEvaluation',
@@ -226,10 +211,10 @@ export const useEvaluationResponsesApi = () => {
             completed_at: now,
             updated_at: now,
             avaliador_id: avaliador_id,
-            avaliacao_id: avaliacao_id
+            avaliacao_id: avaliacao_id,
+            avaliados_ids: avaliados_ids || []
         };
 
-        console.log('Finalizando avaliação com payload:', payload);
         return await makeRequest(payload);
     };
 

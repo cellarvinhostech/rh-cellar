@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { ArrowLeft, User, Clock, CheckCircle, AlertCircle, ChevronRight, Crown, Users, UserCheck, Building2, Calendar, FileText, PlayCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { usePendingEvaluations } from "@/hooks/use-pending-evaluations";
+import { usePendingEvaluationsApi } from "@/hooks/use-pending-evaluations-api";
 import { useEvaluationQuestions } from "@/hooks/use-evaluation-questions";
 import { useLocation } from "wouter";
 
 export default function PendingEvaluations() {
-  const { pendingEvaluations, loading, error, refetch } = usePendingEvaluations();
+  const { pendingEvaluations, loading, error, refetch } = usePendingEvaluationsApi();
   const { fetchEvaluationQuestions, loading: questionsLoading } = useEvaluationQuestions();
   const [, setLocation] = useLocation();
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('pending');
@@ -109,54 +109,18 @@ export default function PendingEvaluations() {
     }
   };
 
-  // Agrupar avaliações por avaliacao_id
-  const groupedEvaluations = pendingEvaluations.reduce((acc, evaluation) => {
-    const key = evaluation.avaliacao_id;
-    if (!acc[key]) {
-      acc[key] = {
-        avaliacao_id: evaluation.avaliacao_id,
-        avaliacao_name: evaluation.avaliacao_name,
-        avaliacao_description: evaluation.avaliacao_description,
-        avaliacao_start_date: evaluation.avaliacao_start_date,
-        avaliacao_end_date: evaluation.avaliacao_end_date,
-        avaliacao_form_id: evaluation.avaliacao_form_id,
-        people: [],
-        totalPeople: 0,
-        pendingCount: 0,
-        inProgressCount: 0,
-        completedCount: 0,
-      };
-    }
-    
-    acc[key].people.push(evaluation);
-    acc[key].totalPeople++;
-    
-    if (evaluation.status === 'pending') acc[key].pendingCount++;
-    else if (evaluation.status === 'in_progress') acc[key].inProgressCount++;
-    else if (evaluation.status === 'completed') acc[key].completedCount++;
-    
-    return acc;
-  }, {} as Record<string, any>);
-
-  const evaluationsList = Object.values(groupedEvaluations);
-
-  // Filtrar por status
-  const filteredEvaluations = evaluationsList.filter(evaluation => {
+  // Filtrar avaliações baseado no filtro selecionado
+  const filteredEvaluations = pendingEvaluations.filter(evaluation => {
     if (selectedFilter === 'all') return true;
-    if (selectedFilter === 'pending') return evaluation.pendingCount > 0;
-    if (selectedFilter === 'in_progress') return evaluation.inProgressCount > 0;
-    if (selectedFilter === 'completed') return evaluation.completedCount > 0;
-    return true;
+    return evaluation.status === selectedFilter;
   });
 
   const handleStartEvaluation = async (evaluation: any) => {
     try {
-      // Buscar o formulário e suas questões
-      const formData = await fetchEvaluationQuestions(evaluation.avaliacao_id);
+      const formData = await fetchEvaluationQuestions(evaluation.id);
       
       if (formData) {
-        // Navegar para a página de avaliação
-        setLocation(`/evaluation/${evaluation.avaliacao_id}/form`);
+        setLocation(`/evaluation/${evaluation.id}/form`);
       }
     } catch (error) {
       console.error('❌ Erro ao carregar formulário:', error);
@@ -165,10 +129,10 @@ export default function PendingEvaluations() {
   };
 
   const statusCounts = {
-    all: evaluationsList.length,
-    pending: evaluationsList.filter(e => e.pendingCount > 0).length,
-    in_progress: evaluationsList.filter(e => e.inProgressCount > 0).length,
-    completed: evaluationsList.filter(e => e.completedCount > 0 && e.pendingCount === 0 && e.inProgressCount === 0).length,
+    all: pendingEvaluations.length,
+    pending: pendingEvaluations.filter(e => e.status === 'pending').length,
+    in_progress: pendingEvaluations.filter(e => e.status === 'in_progress').length,
+    completed: pendingEvaluations.filter(e => e.status === 'completed').length,
   };
 
   if (loading) {
@@ -208,11 +172,11 @@ export default function PendingEvaluations() {
               <div>
                 <h1 className="text-xl font-bold text-slate-900">Minhas Avaliações Pendentes</h1>
                 <p className="text-slate-600 text-sm">
-                  {filteredEvaluations.length === 0 && evaluationsList.length > 0
+                  {filteredEvaluations.length === 0 && pendingEvaluations.length > 0
                     ? "Nenhuma avaliação encontrada com os filtros selecionados"
-                    : evaluationsList.length === 0 
+                    : pendingEvaluations.length === 0 
                     ? "Nenhuma avaliação encontrada"
-                    : `${filteredEvaluations.length} de ${evaluationsList.length} avaliação${evaluationsList.length !== 1 ? 'ões' : ''} ${filteredEvaluations.length !== evaluationsList.length ? 'filtrada' + (filteredEvaluations.length !== 1 ? 's' : '') : 'encontrada' + (evaluationsList.length !== 1 ? 's' : '')}`
+                    : `${filteredEvaluations.length} de ${pendingEvaluations.length} avaliação${pendingEvaluations.length !== 1 ? 'ões' : ''} ${filteredEvaluations.length !== pendingEvaluations.length ? 'filtrada' + (filteredEvaluations.length !== 1 ? 's' : '') : 'encontrada' + (pendingEvaluations.length !== 1 ? 's' : '')}`
                   }
                 </p>
               </div>
@@ -302,7 +266,7 @@ export default function PendingEvaluations() {
           <div className="space-y-4">
             {filteredEvaluations.map((evaluation) => (
               <div
-                key={evaluation.avaliacao_id}
+                key={evaluation.id}
                 className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all duration-200"
               >
                 {/* Cabeçalho da Avaliação */}
@@ -313,52 +277,34 @@ export default function PendingEvaluations() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-lg font-bold text-slate-900 mb-1">
-                        {evaluation.avaliacao_name}
+                        {evaluation.name}
                       </h3>
-                      {evaluation.avaliacao_description && (
+                      {evaluation.description && (
                         <p className="text-slate-600 text-sm mb-2">
-                          {evaluation.avaliacao_description}
+                          {evaluation.description}
                         </p>
                       )}
-                      {(evaluation.avaliacao_start_date || evaluation.avaliacao_end_date) && (
+                      {(evaluation.start_date || evaluation.end_data) && (
                         <p className="text-slate-500 text-xs flex items-center space-x-1 mt-1">
                           <Calendar className="w-3 h-3" />
                           <span>
-                            {evaluation.avaliacao_start_date && formatDate(evaluation.avaliacao_start_date)}
-                            {evaluation.avaliacao_start_date && evaluation.avaliacao_end_date && ' - '}
-                            {evaluation.avaliacao_end_date && formatDate(evaluation.avaliacao_end_date)}
+                            {evaluation.start_date && formatDate(evaluation.start_date)}
+                            {evaluation.start_date && evaluation.end_data && ' - '}
+                            {evaluation.end_data && formatDate(evaluation.end_data)}
                           </span>
                         </p>
                       )}
-                      <p className="text-slate-500 text-xs flex items-center space-x-1 mt-1">
-                        <User className="w-3 h-3" />
-                        <span>
-                          {evaluation.totalPeople} pessoa{evaluation.totalPeople !== 1 ? 's' : ''} para avaliar
-                        </span>
-                      </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="text-right">
                       <div className="flex items-center space-x-2">
-                        {evaluation.pendingCount > 0 && (
-                          <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded text-xs font-medium">
-                            Pendente
-                          </span>
-                        )}
-                        {evaluation.inProgressCount > 0 && (
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                            Em progresso
-                          </span>
-                        )}
-                        {evaluation.completedCount > 0 && (
-                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
-                            Concluída
-                          </span>
-                        )}
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(evaluation.status)}`}>
+                          {getStatusText(evaluation.status)}
+                        </span>
                       </div>
                     </div>
-                    {evaluation.pendingCount > 0 && (
+                    {evaluation.status === 'pending' && (
                       <button
                         onClick={() => handleStartEvaluation(evaluation)}
                         disabled={questionsLoading}
@@ -384,14 +330,11 @@ export default function PendingEvaluations() {
         )}
 
         {/* Summary */}
-        {evaluationsList.length > 0 && (
+        {filteredEvaluations.length > 0 && (
           <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg border border-slate-200 p-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
               <div className="text-sm font-medium text-slate-700">
-                Total de avaliações: <span className="text-slate-900 font-semibold">{evaluationsList.length}</span>
-                <span className="text-slate-500 ml-2">
-                  ({pendingEvaluations.length} pessoa{pendingEvaluations.length !== 1 ? 's' : ''} para avaliar)
-                </span>
+                Total de avaliações: <span className="text-slate-900 font-semibold">{filteredEvaluations.length}</span>
               </div>
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <div className="flex items-center space-x-1.5">
