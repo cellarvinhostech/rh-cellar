@@ -6,6 +6,8 @@ import { useEvaluationsAPI } from "@/hooks/use-evaluations-api";
 import { useForms, useFormById } from "@/hooks/use-forms-api";
 import { useEmployees } from "@/hooks/use-employees-api";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormComponent } from "@/components/forms/FormComponent";
 import type { APIEvaluation, APIFormWithQuestions, APIEmployee, APIEvaluationWithEvaluated, APIEvaluated, APIEvaluator, Employee } from "@/types/hr";
 
@@ -28,6 +30,7 @@ export default function EvaluationDetail() {
   } = evaluationAPI;
   const { employees, isLoading: isLoadingEmployees } = useEmployees();
   const { toast } = useToast();
+  const { confirm, confirmState } = useConfirm();
   
   const [evaluation, setEvaluation] = useState<APIEvaluation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,7 +85,15 @@ export default function EvaluationDetail() {
   const handleDelete = async () => {
     if (!evaluation) return;
     
-    if (confirm("Tem certeza que deseja excluir esta avaliação?")) {
+    const confirmed = await confirm({
+      title: "Excluir Avaliação",
+      message: `Tem certeza que deseja excluir a avaliação "${evaluation.name}"? Esta ação não pode ser desfeita.`,
+      confirmText: "Excluir",
+      cancelText: "Cancelar",
+      variant: "danger"
+    });
+
+    if (confirmed) {
       try {
         await deleteEvaluation(evaluation.id);
         setLocation("/evaluations");
@@ -162,7 +173,15 @@ export default function EvaluationDetail() {
   const handleRemoveEvaluated = async (evaluatedId: string) => {
     if (!evaluation) return;
     
-    if (confirm("Tem certeza que deseja remover este funcionário da avaliação?")) {
+    const confirmed = await confirm({
+      title: "Remover Funcionário",
+      message: "Tem certeza que deseja remover este funcionário da avaliação? Todos os avaliadores associados também serão removidos.",
+      confirmText: "Remover",
+      cancelText: "Cancelar",
+      variant: "danger"
+    });
+
+    if (confirmed) {
       try {
         await deleteEvaluated(evaluatedId, evaluation.id);
       } catch (error) {
@@ -380,6 +399,18 @@ export default function EvaluationDetail() {
           onSave={handleSaveEvaluated}
         />
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        variant={confirmState.variant}
+        onConfirm={confirmState.onConfirm}
+        onCancel={confirmState.onCancel}
+      />
     </MainLayout>
   );
 }
@@ -764,7 +795,6 @@ function EvaluatorsOffcanvas({
   const handleAddEvaluator = async (employee: APIEmployee) => {
     if (!evaluation || !evaluatedEmployee) return;
     
-    console.log('handleAddEvaluator chamado:', { employeeId: employee.id, activeCategory, evaluationId: evaluation.id, evaluatedId: evaluatedEmployee.id });
     
     // Adicionar ao estado de loading
     setAddingEvaluators(prev => new Set(prev).add(employee.id));
@@ -787,7 +817,6 @@ function EvaluatorsOffcanvas({
         relacionamento
       );
       
-      console.log('Avaliador adicionado com sucesso');
       
     } catch (error) {
       console.error('Erro ao adicionar avaliador:', error);

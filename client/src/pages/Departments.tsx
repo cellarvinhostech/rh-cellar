@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { Plus, Building, Users, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Building2, Edit, Trash2, Loader2, Users } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useDepartmentsAPI } from "@/hooks/use-departments-api";
+import { useDirectoratesAPI } from "@/hooks/use-directorates-api";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription } from "@/components/ui/modal";
 
 export default function Departments() {
@@ -14,6 +17,7 @@ export default function Departments() {
     deleteDepartment 
   } = useDepartmentsAPI();
   const { toast } = useToast();
+  const { confirm, confirmState } = useConfirm();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<any>(null);
   const [formData, setFormData] = useState({ name: "" });
@@ -78,7 +82,15 @@ export default function Departments() {
       return;
     }
 
-    if (confirm("Tem certeza que deseja excluir este departamento?")) {
+    const confirmed = await confirm({
+      title: "Excluir Departamento",
+      message: `Tem certeza que deseja excluir o departamento "${department.name}"? Esta ação não pode ser desfeita.`,
+      confirmText: "Excluir",
+      cancelText: "Cancelar",
+      variant: "danger"
+    });
+
+    if (confirmed) {
       try {
         await deleteDepartment(department.id);
       } catch (error) {
@@ -120,7 +132,7 @@ export default function Departments() {
             </div>
           ) : departments.length === 0 ? (
             <div className="text-center py-12" data-testid="no-departments-message">
-              <Building className="w-12 h-12 mx-auto mb-4 text-slate-400" />
+              <Building2 className="w-12 h-12 mx-auto mb-4 text-slate-400" />
               <h3 className="text-lg font-medium text-slate-900 mb-2">Nenhum departamento cadastrado</h3>
               <p className="text-slate-600">Comece criando seu primeiro departamento.</p>
             </div>
@@ -138,7 +150,7 @@ export default function Departments() {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Building className="text-blue-600 w-6 h-6" />
+                          <Building2 className="text-blue-600 w-6 h-6" />
                         </div>
                         <div>
                           <h3 
@@ -187,7 +199,7 @@ export default function Departments() {
                       
                       <div className="text-center p-3 bg-slate-50 rounded-lg">
                         <div className="flex items-center justify-center mb-1">
-                          <Building className="w-4 h-4 text-slate-600 mr-1" />
+                          <Building2 className="w-4 h-4 text-slate-600 mr-1" />
                         </div>
                         <p 
                           className="text-2xl font-bold text-slate-900"
@@ -254,6 +266,18 @@ export default function Departments() {
             </form>
           </ModalContent>
         </Modal>
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          isOpen={confirmState.isOpen}
+          title={confirmState.title}
+          message={confirmState.message}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          variant={confirmState.variant}
+          onConfirm={confirmState.onConfirm}
+          onCancel={confirmState.onCancel}
+        />
       </div>
     </MainLayout>
   );

@@ -3,6 +3,8 @@ import { Plus, Building2, Edit, Trash2, Loader2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useDirectoratesAPI } from "@/hooks/use-directorates-api";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription } from "@/components/ui/modal";
 
 export default function Directorates() {
@@ -14,6 +16,7 @@ export default function Directorates() {
     deleteDirectorate 
   } = useDirectoratesAPI();
   const { toast } = useToast();
+  const { confirm, confirmState } = useConfirm();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDirectorate, setEditingDirectorate] = useState<any>(null);
@@ -71,7 +74,15 @@ export default function Directorates() {
   };
 
   const handleDeleteDirectorate = async (directorate: any) => {
-    if (confirm("Tem certeza que deseja excluir esta diretoria?")) {
+    const confirmed = await confirm({
+      title: "Excluir Diretoria",
+      message: `Tem certeza que deseja excluir a diretoria "${directorate.name}"? Esta ação não pode ser desfeita.`,
+      confirmText: "Excluir",
+      cancelText: "Cancelar",
+      variant: "danger"
+    });
+
+    if (confirmed) {
       try {
         await deleteDirectorate(directorate.id);
       } catch (error) {
@@ -243,6 +254,18 @@ export default function Directorates() {
             </form>
           </ModalContent>
         </Modal>
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          isOpen={confirmState.isOpen}
+          title={confirmState.title}
+          message={confirmState.message}
+          confirmText={confirmState.confirmText}
+          cancelText={confirmState.cancelText}
+          variant={confirmState.variant}
+          onConfirm={confirmState.onConfirm}
+          onCancel={confirmState.onCancel}
+        />
       </div>
     </MainLayout>
   );

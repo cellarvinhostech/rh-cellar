@@ -242,7 +242,6 @@ export default function Forms() {
           }}
           onSave={(formData) => {
             // TODO: Implementar salvamento de campos/perguntas do formulário
-            console.log("Salvar formulário:", formData);
             setLocation("/forms");
           }}
           onSaveFormData={async (formData) => {
