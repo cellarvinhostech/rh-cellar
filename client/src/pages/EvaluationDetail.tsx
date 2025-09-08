@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
-import { ArrowLeft, Calendar, User, FileText, Clock, CheckCircle, Star, Edit, Trash2, Users, Plus, Search, X, Crown } from "lucide-react";
+import { ArrowLeft, Calendar, User, FileText, Clock, CheckCircle, Star, Edit, Trash2, Users, Plus, Search, X, Crown, UserCheck } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useEvaluationsAPI } from "@/hooks/use-evaluations-api";
 import { useForms, useFormById } from "@/hooks/use-forms-api";
@@ -597,18 +597,19 @@ interface EvaluatorsOffcanvasProps {
     leaders: APIEvaluator[];
     teammates: APIEvaluator[];
     others: APIEvaluator[];
+    self: APIEvaluator[];
   };
   isUserEvaluatorOfEvaluated: (userId: string, evaluatedId: string) => boolean;
   createEvaluator: (
     userId: string, 
     evaluationId: string, 
     evaluatedId: string, 
-    relacionamento: 'leader' | 'teammate' | 'other'
+    relacionamento: 'leader' | 'teammate' | 'other' | 'self'
   ) => Promise<any>;
   onSave: (
     evaluators: Array<{
       userId: string;
-      relacionamento: 'leader' | 'teammate' | 'other';
+      relacionamento: 'leader' | 'teammate' | 'other' | 'self';
     }>,
     evaluationId: string,
     evaluatedId: string
@@ -635,7 +636,7 @@ function EvaluatorsOffcanvas({
   onClose 
 }: EvaluatorsOffcanvasProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState<'leaders' | 'teammates' | 'others'>('leaders');
+  const [activeCategory, setActiveCategory] = useState<'leaders' | 'teammates' | 'others' | 'self'>('leaders');
   const [addingEvaluators, setAddingEvaluators] = useState<Set<string>>(new Set());
   const [removingEvaluators, setRemovingEvaluators] = useState<Set<string>>(new Set());
 
@@ -644,7 +645,7 @@ function EvaluatorsOffcanvas({
     const dataToUse = optimisticEvaluationData || evaluationWithEvaluated;
     
     if (!dataToUse?.avaliadores) {
-      return { leaders: [], teammates: [], others: [] };
+      return { leaders: [], teammates: [], others: [], self: [] };
     }
     
     const allEvaluators = dataToUse.avaliadores.map((item: any) => item.json);
@@ -655,7 +656,8 @@ function EvaluatorsOffcanvas({
     const result = {
       leaders: evaluatedEvaluators.filter((evaluator: any) => evaluator.relacionamento === 'leader'),
       teammates: evaluatedEvaluators.filter((evaluator: any) => evaluator.relacionamento === 'teammate'),
-      others: evaluatedEvaluators.filter((evaluator: any) => evaluator.relacionamento === 'other')
+      others: evaluatedEvaluators.filter((evaluator: any) => evaluator.relacionamento === 'other'),
+      self: evaluatedEvaluators.filter((evaluator: any) => evaluator.relacionamento === 'self')
     };
     
     return result;
@@ -667,7 +669,7 @@ function EvaluatorsOffcanvas({
     if (!evaluatedEmployee?.id) return null;
     
     const existingEvaluators = getOptimisticEvaluatorsByEvaluatedId(evaluatedEmployee.id);
-    const allEvaluators = [...existingEvaluators.leaders, ...existingEvaluators.teammates, ...existingEvaluators.others];
+    const allEvaluators = [...existingEvaluators.leaders, ...existingEvaluators.teammates, ...existingEvaluators.others, ...existingEvaluators.self];
     
     const evaluator = allEvaluators.find((evaluator: any) => evaluator.user_id === userId);
     return evaluator?.id || null;
@@ -686,7 +688,7 @@ function EvaluatorsOffcanvas({
     // Primeiro, fazer a animação visual (remoção otimista)
     // Encontrar em qual categoria o avaliador está
     const existingEvaluators = getOptimisticEvaluatorsByEvaluatedId(evaluatedEmployee.id!);
-    const allEvaluators = [...existingEvaluators.leaders, ...existingEvaluators.teammates, ...existingEvaluators.others];
+    const allEvaluators = [...existingEvaluators.leaders, ...existingEvaluators.teammates, ...existingEvaluators.others, ...existingEvaluators.self];
     const evaluatorToRemove = allEvaluators.find((evaluator: any) => evaluator.user_id === userId);
     
     if (!evaluatorToRemove) {
@@ -740,7 +742,7 @@ function EvaluatorsOffcanvas({
 
   // Filtrar funcionários baseado no relacionamento com o avaliado
   const getFilteredEmployees = () => {
-    if (!evaluatedEmployee) return { leaders: [], teammates: [], others: [] };
+    if (!evaluatedEmployee) return { leaders: [], teammates: [], others: [], self: [] };
 
     const leaders = employees.filter(emp => 
       emp.id === evaluatedEmployee.lider_direto
@@ -758,7 +760,12 @@ function EvaluatorsOffcanvas({
       emp.department_id !== evaluatedEmployee.department_id // Departamento diferente
     );
 
-    return { leaders, teammates, others };
+    // Para autoavaliação, apenas o próprio funcionário
+    const self = employees.filter(emp => 
+      emp.id === evaluatedEmployee.user_id
+    );
+
+    return { leaders, teammates, others, self };
   };
 
   const categorizedEmployees = getFilteredEmployees();
@@ -803,7 +810,8 @@ function EvaluatorsOffcanvas({
     const relacionamentoMap = {
       'leaders': 'leader' as const,
       'teammates': 'teammate' as const,
-      'others': 'other' as const
+      'others': 'other' as const,
+      'self': 'self' as const
     };
     
     const relacionamento = relacionamentoMap[activeCategory];
@@ -832,12 +840,12 @@ function EvaluatorsOffcanvas({
   };
 
   const getEmployeeById = (id: string) => {
-    return [...categorizedEmployees.leaders, ...categorizedEmployees.teammates, ...categorizedEmployees.others]
+    return [...categorizedEmployees.leaders, ...categorizedEmployees.teammates, ...categorizedEmployees.others, ...categorizedEmployees.self]
       .find(emp => emp.id === id);
   };
 
   // Calcular funcionários disponíveis para cada categoria (excluindo os que já são avaliadores)
-  const getAvailableCountForCategory = (category: 'leaders' | 'teammates' | 'others') => {
+  const getAvailableCountForCategory = (category: 'leaders' | 'teammates' | 'others' | 'self') => {
     const categoryEmployees = categorizedEmployees[category];
     if (!evaluatedEmployee?.id) return categoryEmployees.length;
     
@@ -870,6 +878,13 @@ function EvaluatorsOffcanvas({
       icon: User, 
       color: 'bg-green-100 text-green-800',
       description: `Colaboradores de outros departamentos (${getAvailableCountForCategory('others')} disponíveis)`
+    },
+    { 
+      key: 'self' as const, 
+      label: 'Autoavaliação', 
+      icon: UserCheck, 
+      color: 'bg-yellow-100 text-yellow-800',
+      description: `Autoavaliação (${getAvailableCountForCategory('self')} disponível)`
     }
   ];
 
@@ -915,8 +930,8 @@ function EvaluatorsOffcanvas({
       </div>
 
       {/* Categories Tabs */}
-      <div className="border-b border-slate-200 px-6">
-        <div className="flex space-x-1">
+      <div className="border-b border-slate-200 px-4 md:px-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-1">
           {categories.map((category) => {
             const Icon = category.icon;
             const isActive = activeCategory === category.key;
@@ -925,14 +940,14 @@ function EvaluatorsOffcanvas({
               <button
                 key={category.key}
                 onClick={() => setActiveCategory(category.key)}
-                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center space-x-2 ${
+                className={`px-2 py-3 text-xs font-medium border-b-2 transition-colors flex flex-col items-center space-y-1 min-w-0 ${
                   isActive
                     ? 'border-primary text-primary bg-primary/5'
                     : 'border-transparent text-slate-600 hover:text-slate-800 hover:border-slate-300'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span>{category.label}</span>
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span className="text-center leading-tight text-[10px] sm:text-xs">{category.label}</span>
               </button>
             );
           })}

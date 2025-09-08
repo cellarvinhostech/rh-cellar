@@ -80,6 +80,7 @@ export function useEvaluationsAPI() {
       const response = await makeRequest({ operation: 'readAll' });
 
       if (Array.isArray(response)) {
+
         const validEvaluations = response.filter((evaluation: any) =>
           evaluation &&
           typeof evaluation === 'object' &&
@@ -88,6 +89,7 @@ export function useEvaluationsAPI() {
         );
         setEvaluations(validEvaluations);
       } else if (response.success && Array.isArray(response.data)) {
+
         const validEvaluations = response.data.filter((evaluation: any) =>
           evaluation &&
           typeof evaluation === 'object' &&
@@ -155,6 +157,7 @@ export function useEvaluationsAPI() {
     leaders: APIEvaluator[];
     teammates: APIEvaluator[];
     others: APIEvaluator[];
+    self: APIEvaluator[];
   } => {
     const allEvaluators = getEvaluators();
     const evaluatedEvaluators = allEvaluators.filter(evaluator =>
@@ -164,7 +167,8 @@ export function useEvaluationsAPI() {
     return {
       leaders: evaluatedEvaluators.filter(evaluator => evaluator.relacionamento === 'leader'),
       teammates: evaluatedEvaluators.filter(evaluator => evaluator.relacionamento === 'teammate'),
-      others: evaluatedEvaluators.filter(evaluator => evaluator.relacionamento === 'other')
+      others: evaluatedEvaluators.filter(evaluator => evaluator.relacionamento === 'other'),
+      self: evaluatedEvaluators.filter(evaluator => evaluator.relacionamento === 'self')
     };
   }, [getEvaluators]);
 
@@ -246,6 +250,7 @@ export function useEvaluationsAPI() {
 
   const createEvaluated = async (userId: string, evaluationId: string) => {
     try {
+
       const response = await makeEvaluatedRequest({
         operation: 'create',
         data: {
@@ -289,7 +294,6 @@ export function useEvaluationsAPI() {
         data: evaluatedData
       });
 
-
       if (response.success) {
         toast({
           title: "Sucesso",
@@ -320,7 +324,6 @@ export function useEvaluationsAPI() {
         operation: 'delete',
         id: evaluatedId
       });
-
 
       if (response.success) {
         toast({
@@ -364,7 +367,6 @@ export function useEvaluationsAPI() {
         }
       });
 
-
       if (response.success) {
         toast({
           title: "Sucesso",
@@ -395,7 +397,7 @@ export function useEvaluationsAPI() {
   const createMultipleEvaluators = async (
     evaluators: Array<{
       userId: string;
-      relacionamento: 'leader' | 'teammate' | 'other';
+      relacionamento: 'leader' | 'teammate' | 'other' | 'self';
     }>,
     evaluationId: string,
     evaluatedId: string
@@ -414,7 +416,6 @@ export function useEvaluationsAPI() {
         operation: 'createMultiple',
         data: evaluatorsData
       });
-
 
       if (response.success) {
         toast({
@@ -450,7 +451,6 @@ export function useEvaluationsAPI() {
         operation: 'delete',
         id: evaluatorId
       });
-
 
       if (response.success) {
         toast({
