@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Employees from "@/pages/Employees";
 import CreateEmployee from "@/pages/CreateEmployee";
 import EditEmployee from "@/pages/EditEmployee";
+import Users from "@/pages/Users";
 import Departments from "@/pages/Departments";
 import Positions from "@/pages/Positions";
 import Hierarchy from "@/pages/Hierarchy";
@@ -48,77 +49,77 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/employees/create">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <CreateEmployee />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/employees/edit/:id">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <EditEmployee />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/departments">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <Departments />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/positions">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <Positions />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/hierarchy">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <Hierarchy />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/hierarchy-levels">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <HierarchyLevels />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/directorates">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <Directorates />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/shifts">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <Shifts />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/units">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <Units />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/forms">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <Forms />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/forms/:id/edit">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <Forms />
           </FirstAccessGuard>
@@ -139,14 +140,14 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/evaluations/:id/edit">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <EvaluationEdit />
           </FirstAccessGuard>
         </ProtectedRoute>
       </Route>
       <Route path="/settings">
-        <ProtectedRoute>
+        <ProtectedRoute requireRole="admin">
           <FirstAccessGuard>
             <Settings />
           </FirstAccessGuard>

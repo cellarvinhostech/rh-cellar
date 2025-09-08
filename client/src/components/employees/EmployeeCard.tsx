@@ -7,9 +7,11 @@ interface EmployeeCardProps {
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
+  showActions?: boolean;
+  showEditActions?: boolean;
 }
 
-export function EmployeeCard({ employee, onView, onEdit, onDelete }: EmployeeCardProps) {
+export function EmployeeCard({ employee, onView, onEdit, onDelete, showActions = true, showEditActions = true }: EmployeeCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -85,32 +87,40 @@ export function EmployeeCard({ employee, onView, onEdit, onDelete }: EmployeeCar
           </span>
         </div>
       </div>
-      <div className="mt-3 flex space-x-2">
-        <button 
-          className="btn-secondary-compact flex-1 text-xs"
-          onClick={() => onView(employee.id)}
-          data-testid={`view-employee-${employee.id}`}
-        >
-          <Eye className="w-3 h-3 mr-1" />
-          Ver
-        </button>
-        <button 
-          className="btn-secondary-compact flex-1 text-xs"
-          onClick={() => onEdit(employee.id)}
-          data-testid={`edit-employee-${employee.id}`}
-        >
-          <Edit className="w-3 h-3 mr-1" />
-          Editar
-        </button>
-        <button 
-          className="px-2 py-1 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded transition-colors"
-          onClick={() => onDelete(employee.id)}
-          data-testid={`delete-employee-${employee.id}`}
-          title="Excluir funcionário"
-        >
-          <Trash2 className="w-3 h-3" />
-        </button>
-      </div>
+      {showActions && (
+        <div className="mt-3 flex space-x-2">
+          {showEditActions && (
+            <button 
+              className="btn-secondary-compact flex-1 text-xs"
+              onClick={() => onView(employee.id)}
+              data-testid={`view-employee-${employee.id}`}
+            >
+              <Eye className="w-3 h-3 mr-1" />
+              Ver
+            </button>
+          )}
+          {showEditActions && (
+            <button 
+              className="btn-secondary-compact flex-1 text-xs"
+              onClick={() => onEdit(employee.id)}
+              data-testid={`edit-employee-${employee.id}`}
+            >
+              <Edit className="w-3 h-3 mr-1" />
+              Editar
+            </button>
+          )}
+          {showEditActions && (
+            <button 
+              className="px-2 py-1 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded transition-colors"
+              onClick={() => onDelete(employee.id)}
+              data-testid={`delete-employee-${employee.id}`}
+              title="Excluir funcionário"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

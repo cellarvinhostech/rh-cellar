@@ -1,14 +1,21 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { BarChart3 } from "lucide-react";
+import { usePermissions } from "@/hooks/use-permissions";
+import type { UserRole } from "@/types/auth";
+import { BarChart3, Lock } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requireRole?: UserRole;
+  resource?: string;
+  action?: string;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requireRole, resource, action }: ProtectedRouteProps) {
   const { authState } = useAuth();
+  const { hasPermission, userRole } = usePermissions();
   const [_, navigate] = useLocation();
 
   useEffect(() => {
@@ -34,6 +41,34 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!authState.isAuthenticated) {
     return null;
+  }
+
+  // Verificar permissões baseadas em role
+  if (requireRole && userRole !== requireRole) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Alert className="max-w-md">
+          <Lock className="h-4 w-4" />
+          <AlertDescription>
+            Você não tem permissão para acessar esta página.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  // Verificar permissões baseadas em recurso e ação
+  if (resource && action && !hasPermission(resource, action)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Alert className="max-w-md">
+          <Lock className="h-4 w-4" />
+          <AlertDescription>
+            Você não tem permissão para acessar esta página.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return <>{children}</>;
