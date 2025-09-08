@@ -6,8 +6,18 @@ import { useLocation } from "wouter";
 
 export function PendingEvaluationsNotification() {
   const { pendingEvaluations, loading } = usePendingEvaluationsApi();
-  const pendingCount = pendingEvaluations?.length || 0;
+  
+  const actuallyPendingEvaluations = pendingEvaluations?.filter(
+    evaluation => evaluation.status !== 'completed'
+  ) || [];
+  
+  const pendingCount = actuallyPendingEvaluations.length;
   const [, setLocation] = useLocation();
+
+  // console.log("PendingEvaluationsNotification - todas as avaliações:", pendingEvaluations);
+  // console.log("PendingEvaluationsNotification - avaliações realmente pendentes:", actuallyPendingEvaluations);
+  // console.log("PendingEvaluationsNotification - pendingCount:", pendingCount);
+  // console.log("PendingEvaluationsNotification - loading:", loading);
 
   if (loading || pendingCount === 0) {
     return null;
@@ -50,12 +60,13 @@ export function PendingEvaluationsNotification() {
 
           <div className="text-sm text-amber-700">
             <div className="flex items-center space-x-2">
+              {/*
               <UserCheck className="w-4 h-4" />
               <span>
                 {pendingCount === 1
                   ? "1 pessoa aguardando sua avaliação"
                   : `${pendingCount} pessoas aguardando suas avaliações`}
-              </span>
+              </span> */}
             </div>
           </div>
         </div>

@@ -204,18 +204,62 @@ export const useEvaluationResponsesApi = () => {
 
     // 6. SUBMITEVAL - Finalizar avaliação
     const submitEvaluation = async (avaliador_id: string, avaliacao_id: string, avaliados_ids?: string[]) => {
-        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        const payload = {
-            operation: 'submitEvaluation',
-            status: 'completed',
-            completed_at: now,
-            updated_at: now,
-            avaliador_id: avaliador_id,
-            avaliacao_id: avaliacao_id,
-            avaliados_ids: avaliados_ids || []
-        };
+        try {
+            const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-        return await makeRequest(payload);
+            const checkPayload = {
+                operation: 'checkAllEvaluatorsCompleted',
+                avaliacao_id: avaliacao_id,
+                avaliador_id: avaliador_id, // Para debug
+                timestamp: now // Para debug
+            };
+
+            const checkResult = await makeRequest(checkPayload);
+
+            if (!checkResult.success || !checkResult.allCompleted) {
+                console.log('Nem todos os avaliadores completaram ainda. Marcando apenas este avaliador como completo.');
+
+                const partialPayload = {
+                    operation: 'markEvaluatorCompleted',
+                    avaliador_id: avaliador_id,
+                    avaliacao_id: avaliacao_id,
+                    avaliados_ids: avaliados_ids || [],
+                    status: 'completed',
+                    completed_at: now,
+                    updated_at: now
+                };
+
+                return await makeRequest(partialPayload);
+            }
+
+            console.log('Todos os avaliadores completaram! Finalizando avaliação completa.');
+            const payload = {
+                operation: 'submitEvaluation',
+                status: 'completed',
+                completed_at: now,
+                updated_at: now,
+                avaliador_id: avaliador_id,
+                avaliacao_id: avaliacao_id,
+                avaliados_ids: avaliados_ids || []
+            };
+
+            return await makeRequest(payload);
+
+        } catch (error) {
+            console.error('Erro ao verificar status dos avaliadores:', error);
+            const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            const payload = {
+                operation: 'submitEvaluation',
+                status: 'completed',
+                completed_at: now,
+                updated_at: now,
+                avaliador_id: avaliador_id,
+                avaliacao_id: avaliacao_id,
+                avaliados_ids: avaliados_ids || []
+            };
+
+            return await makeRequest(payload);
+        }
     };
 
     // 7. GETPROGRESS - Buscar progresso

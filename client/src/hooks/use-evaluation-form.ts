@@ -12,7 +12,6 @@ export interface PersonToEvaluate {
     id: string;
     name: string;
     department: string;
-    relacionamento: string;
 }
 
 export const useEvaluationForm = (
@@ -80,7 +79,6 @@ export const useEvaluationForm = (
                 await markEvaluationStarted();
             }
         } catch (error) {
-            console.error('Erro ao carregar respostas salvas:', error);
             await markEvaluationStarted();
         }
     };
@@ -88,7 +86,6 @@ export const useEvaluationForm = (
     const markEvaluationStarted = async () => {
         try {
             if (!userId) {
-                console.error('userId está vazio ou undefined no markEvaluationStarted');
                 return;
             }
 
@@ -111,7 +108,7 @@ export const useEvaluationForm = (
 
             await Promise.all(progressPromises);
         } catch (error) {
-            console.error('Erro ao marcar avaliação como iniciada:', error);
+            throw error;
         }
     }; const getPersonResponse = useCallback((personId: string, questionId: string): string => {
         const response = responses.find(
@@ -146,7 +143,6 @@ export const useEvaluationForm = (
     const updateLastActivity = useCallback(async (personId: string) => {
         try {
             if (!userId) {
-                console.error('userId está vazio ou undefined no updateLastActivity');
                 return;
             }
 
@@ -171,7 +167,7 @@ export const useEvaluationForm = (
                 last_activity: new Date().toISOString()
             });
         } catch (error) {
-            console.error('Erro ao atualizar última atividade:', error);
+            throw error;
         }
     }, [responses, userId, evaluationId, formId, saveProgress]);
 
@@ -179,7 +175,6 @@ export const useEvaluationForm = (
         setAutoSaving(true);
         try {
             if (!userId) {
-                console.error('userId está vazio ou undefined no saveDraft');
                 setAutoSaving(false);
                 return;
             }
@@ -274,7 +269,7 @@ export const useEvaluationForm = (
 
             setLastSaved(new Date());
         } catch (error) {
-            console.error('Erro ao salvar rascunho:', error);
+            throw error;
         } finally {
             setAutoSaving(false);
         }
@@ -322,7 +317,7 @@ export const useEvaluationForm = (
 
             await Promise.all(progressPromises);
         } catch (error) {
-            console.error('Erro ao salvar progresso:', error);
+            throw error;
         }
     }, [responses, userId, evaluationId, formId, peopleToEvaluate, saveProgress]);
 
@@ -411,7 +406,7 @@ export const useEvaluationForm = (
                     }
                 }
             } catch (verificationError) {
-                console.warn('Erro na verificação final, mas continuando:', verificationError);
+                // Continue silently
             }
 
             setModifiedResponses(new Set());
@@ -441,14 +436,12 @@ export const useEvaluationForm = (
             const submitResult = await submitEvaluation(userId, evaluationId, avaliadosIds);
 
             if (!submitResult.success) {
-                console.error('Erro ao finalizar avaliação:', submitResult);
                 throw new Error('Falha ao marcar avaliação como finalizada');
             }
 
             return { success: true, message: 'Avaliação enviada com sucesso!' };
 
         } catch (error) {
-            console.error('Erro ao finalizar avaliação:', error);
             return {
                 success: false,
                 error,
@@ -477,6 +470,32 @@ export const useEvaluationForm = (
         };
     }, [peopleToEvaluate, getPersonResponse]);
 
+    const hasPendingChanges = useCallback(() => {
+        const responsesToSave = responses.filter(response => {
+            const responseKey = `${response.personId}_${response.questionId}`;
+
+            if (!modifiedResponses.has(responseKey)) {
+                return false;
+            }
+
+            if (!response.response) {
+                return false;
+            }
+
+            if (typeof response.response === 'string') {
+                return response.response.trim() !== '';
+            }
+
+            if (Array.isArray(response.response)) {
+                return response.response.length > 0;
+            }
+
+            return true;
+        });
+
+        return responsesToSave.length > 0;
+    }, [responses, modifiedResponses]);
+
     return {
         responses,
 
@@ -493,6 +512,7 @@ export const useEvaluationForm = (
         saveFormProgress,
         submitForm,
         validateForm,
+        hasPendingChanges,
 
         loadSavedResponses,
     };

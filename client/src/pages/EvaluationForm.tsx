@@ -3,7 +3,7 @@ import { ArrowLeft, User, Star, ChevronLeft, ChevronRight, Save, Send, FileText 
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useEvaluationQuestions } from "@/hooks/use-evaluation-questions";
-import { usePendingEvaluations } from "@/hooks/use-pending-evaluations";
+import { useAvaliados } from "@/hooks/use-avaliados";
 import { useEvaluationForm } from "@/hooks/use-evaluation-form";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +18,6 @@ interface PersonToEvaluate {
   id: string;
   name: string;
   department: string;
-  relacionamento: string;
 }
 
 export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
@@ -27,7 +26,7 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
   const { confirm, confirmState } = useConfirm();
   const { toast } = useToast();
   const { formData, loading, error, fetchEvaluationQuestions } = useEvaluationQuestions();
-  const { pendingEvaluations } = usePendingEvaluations();
+  const { avaliados } = useAvaliados(evaluationId, authState?.user?.id);
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [peopleToEvaluate, setPeopleToEvaluate] = useState<PersonToEvaluate[]>([]);
@@ -40,6 +39,7 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
     submitForm,
     validateForm,
     saveDraft,
+    hasPendingChanges,
     loading: formLoading,
     autoSaving,
     lastSaved,
@@ -56,29 +56,22 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
   }, [evaluationId, fetchEvaluationQuestions]);
 
   useEffect(() => {
-    if (pendingEvaluations.length > 0) {
-      const peopleForThisEvaluation = pendingEvaluations.filter((evaluation) => {
-        return evaluation.avaliacao_id === evaluationId;
-      });
+    if (avaliados.length > 0) {
+      const people = avaliados.map((avaliado) => ({
+        id: avaliado.user_id,
+        name: avaliado.name || `Usuário ${avaliado.user_id.slice(0, 8)}`,
+        department: avaliado.department || 'Departamento não informado'
+      }));
       
-      if (peopleForThisEvaluation.length > 0) {
-        const people = peopleForThisEvaluation.map(evaluation => ({
-          id: evaluation.evaluatedId,
-          name: evaluation.evaluatedName,
-          department: evaluation.department_name || '',
-          relacionamento: evaluation.relacionamento
-        }));
-        
-        setPeopleToEvaluate(people);
-      }
+      setPeopleToEvaluate(people);
     }
-  }, [pendingEvaluations, evaluationId]);
+  }, [avaliados]);
 
   useEffect(() => {
     const autoSaveInterval = setInterval(() => {
       if (!autoSaving && !formLoading) {
         saveDraft().catch(error => {
-          console.error('Erro no auto-save:', error);
+          // Silently handle auto-save errors
         });
       }
     }, 30000);
@@ -183,7 +176,6 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
         });
       }
     } catch (error) {
-      console.error('Erro ao enviar avaliação:', error);
       toast({
         title: "Erro",
         description: "Erro ao enviar avaliação. Tente novamente.",
@@ -312,26 +304,6 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
     }
   };
 
-  const getRelacionamentoColor = (relacionamento: string) => {
-    switch (relacionamento) {
-      case 'leader': return 'bg-purple-100 text-purple-700';
-      case 'teammate': return 'bg-blue-100 text-blue-700';
-      case 'subordinate': return 'bg-green-100 text-green-700';
-      case 'peer': return 'bg-orange-100 text-orange-700';
-      default: return 'bg-slate-100 text-slate-700';
-    }
-  };
-
-  const getRelacionamentoText = (relacionamento: string) => {
-    switch (relacionamento) {
-      case 'leader': return 'Liderança';
-      case 'teammate': return 'Colega';
-      case 'subordinate': return 'Subordinado';
-      case 'peer': return 'Par';
-      default: return 'Outro';
-    }
-  };
-
   if (loading) {
     return (
       <MainLayout>
@@ -425,61 +397,6 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
           </div>
         </div>
 
-        {/* Question */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-          {/* Exibir erros de validação */}
-          {validationErrors.length > 0 && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
-              <p className="text-red-600 font-medium text-sm">Campos obrigatórios não preenchidos</p>
-            </div>
-          )}
-
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-slate-900 mb-2">
-              {currentQuestion.name}
-              {currentQuestion.required && (
-                <span className="text-red-500 ml-1">*</span>
-              )}
-            </h2>
-            {currentQuestion.help_text && (
-              <p className="text-slate-600 text-sm">
-                {currentQuestion.help_text}
-              </p>
-            )}
-          </div>
-
-          {/* People to Evaluate ou Section */}
-          {currentQuestion.type === 'section' ? (
-            <div className="text-center py-4">
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {peopleToEvaluate.map((person) => (
-                <div key={person.id} className="border border-slate-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-slate-900">{person.name}</h3>
-                        <p className="text-sm text-slate-600">{person.department}</p>
-                      </div>
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRelacionamentoColor(person.relacionamento)}`}>
-                      {getRelacionamentoText(person.relacionamento)}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {renderQuestionInput(person)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* Navigation */}
         <div className="flex items-center justify-between">
           <button
@@ -494,7 +411,7 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
           <div className="flex space-x-3">
             <button
               onClick={saveDraft}
-              disabled={autoSaving}
+              disabled={autoSaving || !hasPendingChanges()}
               className="flex items-center space-x-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-600 hover:text-slate-800 hover:border-slate-400 transition-colors disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
@@ -521,6 +438,65 @@ export default function EvaluationForm({ evaluationId }: EvaluationFormProps) {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Question */}
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+          {/* Exibir erros de validação */}
+          {validationErrors.length > 0 && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+              <p className="text-red-600 font-medium text-sm">Perguntas Obrigatórias não preenchidas</p>
+            </div>
+          )}
+
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">
+              {currentQuestion.name}
+              {currentQuestion.required && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
+            </h2>
+            {currentQuestion.help_text && currentQuestion.type !== 'text' && currentQuestion.type !== 'textarea' && (
+              <p className="text-slate-600 text-sm">
+                {currentQuestion.help_text}
+              </p>
+            )}
+          </div>
+
+          {/* People to Evaluate ou Section */}
+          {currentQuestion.type === 'section' ? (
+            <div className="text-center py-4">
+            </div>
+          ) : peopleToEvaluate.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-3"></div>
+                <p className="text-slate-600 text-sm">Carregando pessoas para avaliar...</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {peopleToEvaluate.map((person) => (
+                <div key={person.id} className="border border-slate-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <User className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-slate-900">{person.name}</h3>
+                        <p className="text-sm text-slate-600">{person.department}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {renderQuestionInput(person)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

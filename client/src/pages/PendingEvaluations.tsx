@@ -1,15 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft, User, Clock, CheckCircle, AlertCircle, ChevronRight, Crown, Users, UserCheck, Building2, Calendar, FileText, PlayCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { usePendingEvaluationsApi } from "@/hooks/use-pending-evaluations-api";
+import { useEvaluationsAPI } from "@/hooks/use-evaluations-api";
 import { useEvaluationQuestions } from "@/hooks/use-evaluation-questions";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function PendingEvaluations() {
   const { pendingEvaluations, loading, error, refetch } = usePendingEvaluationsApi();
+  const { fetchEvaluationById } = useEvaluationsAPI();
   const { fetchEvaluationQuestions, loading: questionsLoading } = useEvaluationQuestions();
   const [, setLocation] = useLocation();
+  const { authState } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('pending');
+  const [evaluatorStatuses, setEvaluatorStatuses] = useState<Record<string, 'pending' | 'in_progress' | 'completed'>>({});
+  const [loadingEvaluatorStatuses, setLoadingEvaluatorStatuses] = useState(false);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -109,14 +115,39 @@ export default function PendingEvaluations() {
     }
   };
 
-  // Filtrar avaliações baseado no filtro selecionado
   const filteredEvaluations = pendingEvaluations.filter(evaluation => {
     if (selectedFilter === 'all') return true;
-    return evaluation.status === selectedFilter;
+    
+    const evaluatorStatus = evaluatorStatuses[evaluation.id] || 'pending';
+    return evaluatorStatus === selectedFilter;
   });
+
+  const checkEvaluatorStatus = async (evaluationId: string): Promise<'pending' | 'in_progress' | 'completed'> => {
+    try {
+      const evaluationData = await fetchEvaluationById(evaluationId);
+      if (!evaluationData || !authState?.user?.id) return 'pending';
+
+      const evaluators = evaluationData.avaliadores?.map(item => item.json) || [];
+      const currentUserAsEvaluator = evaluators.find(evaluator => 
+        evaluator.user_id === authState.user!.id
+      );
+
+      return currentUserAsEvaluator?.status || 'pending';
+    } catch (error) {
+      console.error('Erro ao verificar status do avaliador:', error);
+      return 'pending';
+    }
+  };
 
   const handleStartEvaluation = async (evaluation: any) => {
     try {
+      const evaluatorStatus = evaluatorStatuses[evaluation.id] || 'pending';
+      
+      if (evaluatorStatus === 'completed') {
+        alert('Você já completou esta avaliação.');
+        return;
+      }
+
       const formData = await fetchEvaluationQuestions(evaluation.id);
       
       if (formData) {
@@ -128,11 +159,43 @@ export default function PendingEvaluations() {
     }
   };
 
+  useEffect(() => {
+    const loadEvaluatorStatuses = async () => {
+      if (!authState?.user?.id || pendingEvaluations.length === 0) return;
+
+      setLoadingEvaluatorStatuses(true);
+      const statuses: Record<string, 'pending' | 'in_progress' | 'completed'> = {};
+      
+      for (const evaluation of pendingEvaluations) {
+        try {
+          const evaluationData = await fetchEvaluationById(evaluation.id);
+          if (evaluationData && authState?.user?.id) {
+            const evaluators = evaluationData.avaliadores?.map(item => item.json) || [];
+            const currentUserAsEvaluator = evaluators.find(evaluator => 
+              evaluator.user_id === authState.user!.id
+            );
+            statuses[evaluation.id] = currentUserAsEvaluator?.status || 'pending';
+          } else {
+            statuses[evaluation.id] = 'pending';
+          }
+        } catch (error) {
+          console.error(`Erro ao verificar status da avaliação ${evaluation.id}:`, error);
+          statuses[evaluation.id] = 'pending';
+        }
+      }
+      
+      setEvaluatorStatuses(statuses);
+      setLoadingEvaluatorStatuses(false);
+    };
+
+    loadEvaluatorStatuses();
+  }, [pendingEvaluations, authState?.user?.id, fetchEvaluationById]);
+
   const statusCounts = {
     all: pendingEvaluations.length,
-    pending: pendingEvaluations.filter(e => e.status === 'pending').length,
-    in_progress: pendingEvaluations.filter(e => e.status === 'in_progress').length,
-    completed: pendingEvaluations.filter(e => e.status === 'completed').length,
+    pending: loadingEvaluatorStatuses ? 0 : pendingEvaluations.filter(e => (evaluatorStatuses[e.id] || 'pending') === 'pending').length,
+    in_progress: loadingEvaluatorStatuses ? 0 : pendingEvaluations.filter(e => (evaluatorStatuses[e.id] || 'pending') === 'in_progress').length,
+    completed: loadingEvaluatorStatuses ? 0 : pendingEvaluations.filter(e => (evaluatorStatuses[e.id] || 'pending') === 'completed').length,
   };
 
   if (loading) {
@@ -189,7 +252,7 @@ export default function PendingEvaluations() {
                 }}
                 className="text-sm text-slate-600 hover:text-slate-800 underline"
               >
-                Limpar filtros
+                Ver pendentes
               </button>
             )}
           </div>
@@ -217,27 +280,34 @@ export default function PendingEvaluations() {
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <span className="text-sm font-medium text-slate-700">Filtrar por status:</span>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { key: 'all', label: 'Todas', count: statusCounts.all },
-                { key: 'pending', label: 'Pendentes', count: statusCounts.pending },
-                { key: 'in_progress', label: 'Em Progresso', count: statusCounts.in_progress },
-                { key: 'completed', label: 'Concluídas', count: statusCounts.completed },
-              ].map((filter) => (
-                <button
-                  key={filter.key}
-                  onClick={() => setSelectedFilter(filter.key as any)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    selectedFilter === filter.key
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  {filter.label} ({filter.count})
-                </button>
-              ))}
-            </div>
+            <span className="text-sm font-medium text-slate-700">Filtrar por meu status:</span>
+            {loadingEvaluatorStatuses ? (
+              <div className="flex items-center space-x-2 text-slate-500">
+                <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
+                <span className="text-sm">Carregando status...</span>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: 'all', label: 'Todas', count: statusCounts.all },
+                  { key: 'pending', label: 'Pendentes', count: statusCounts.pending },
+                  { key: 'in_progress', label: 'Em Progresso', count: statusCounts.in_progress },
+                  { key: 'completed', label: 'Concluídas', count: statusCounts.completed },
+                ].map((filter) => (
+                  <button
+                    key={filter.key}
+                    onClick={() => setSelectedFilter(filter.key as any)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      selectedFilter === filter.key
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {filter.label} ({filter.count})
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -251,13 +321,21 @@ export default function PendingEvaluations() {
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
                 {selectedFilter === 'all' 
                   ? 'Nenhuma avaliação encontrada'
-                  : `Nenhuma avaliação ${getStatusText(selectedFilter).toLowerCase()}`
+                  : selectedFilter === 'pending'
+                  ? 'Nenhuma avaliação pendente para você'
+                  : selectedFilter === 'in_progress'  
+                  ? 'Nenhuma avaliação em progresso'
+                  : 'Nenhuma avaliação concluída por você'
                 }
               </h3>
               <p className="text-slate-600 text-sm">
                 {selectedFilter === 'all'
-                  ? 'Você não possui avaliações pendentes no momento.'
-                  : `Não há avaliações com este status no momento.`
+                  ? 'Você não possui avaliações no momento.'
+                  : selectedFilter === 'pending'
+                  ? 'Você não possui avaliações pendentes para avaliar.'
+                  : selectedFilter === 'in_progress'
+                  ? 'Você não possui avaliações em progresso no momento.'
+                  : 'Você não completou nenhuma avaliação ainda.'
                 }
               </p>
             </div>
@@ -302,9 +380,19 @@ export default function PendingEvaluations() {
                         <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(evaluation.status)}`}>
                           {getStatusText(evaluation.status)}
                         </span>
+                        {loadingEvaluatorStatuses ? (
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 flex items-center space-x-1">
+                            <div className="w-3 h-3 border border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
+                            <span>Verificando...</span>
+                          </span>
+                        ) : evaluatorStatuses[evaluation.id] && evaluatorStatuses[evaluation.id] !== 'pending' && (
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(evaluatorStatuses[evaluation.id])}`}>
+                            Minha: {getStatusText(evaluatorStatuses[evaluation.id])}
+                          </span>
+                        )}
                       </div>
                     </div>
-                    {evaluation.status === 'pending' && (
+                    {!loadingEvaluatorStatuses && ((evaluatorStatuses[evaluation.id] || 'pending') === 'pending' || (evaluatorStatuses[evaluation.id] || 'pending') === 'in_progress') ? (
                       <button
                         onClick={() => handleStartEvaluation(evaluation)}
                         disabled={questionsLoading}
@@ -317,11 +405,23 @@ export default function PendingEvaluations() {
                           </>
                         ) : (
                           <>
-                            <span>Avaliar Agora</span>
+                            <span>
+                              {(evaluatorStatuses[evaluation.id] || 'pending') === 'in_progress' ? 'Continuar' : 'Avaliar Agora'}
+                            </span>
                           </>
                         )}
                       </button>
-                    )}
+                    ) : !loadingEvaluatorStatuses && (evaluatorStatuses[evaluation.id] || 'pending') === 'completed' ? (
+                      <div className="flex items-center space-x-2 text-green-600 text-sm font-medium">
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Você já avaliou</span>
+                      </div>
+                    ) : loadingEvaluatorStatuses ? (
+                      <div className="flex items-center space-x-2 text-slate-500 text-sm">
+                        <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
+                        <span>Verificando...</span>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -340,7 +440,7 @@ export default function PendingEvaluations() {
                 <div className="flex items-center space-x-1.5">
                   <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                   <span className="text-amber-700">
-                    Com pendentes: <span className="font-semibold">{statusCounts.pending}</span>
+                    Para avaliar: <span className="font-semibold">{statusCounts.pending}</span>
                   </span>
                 </div>
                 <div className="flex items-center space-x-1.5">
@@ -352,7 +452,7 @@ export default function PendingEvaluations() {
                 <div className="flex items-center space-x-1.5">
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   <span className="text-green-700">
-                    Concluídas: <span className="font-semibold">{statusCounts.completed}</span>
+                    Avaliadas por mim: <span className="font-semibold">{statusCounts.completed}</span>
                   </span>
                 </div>
               </div>
