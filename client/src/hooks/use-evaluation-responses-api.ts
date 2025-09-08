@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { authenticatedFetch } from '@/utils/api';
 import { API_CONFIG } from '@/utils/constants';
+import { pendingEvaluationsCache } from '@/utils/api-cache';
 
 export interface EvaluationResponse {
     id: string;
@@ -215,9 +216,26 @@ export const useEvaluationResponsesApi = () => {
             };
 
             const checkResult = await makeRequest(checkPayload);
+            console.log('=== DEBUG checkAllEvaluatorsCompleted ===');
+            console.log('checkResult completo:', JSON.stringify(checkResult, null, 2));
+            console.log('checkResult.success:', checkResult.success);
+            console.log('checkResult.allCompleted:', checkResult.allCompleted);
+            console.log('Type of allCompleted:', typeof checkResult.allCompleted);
 
-            if (!checkResult.success || !checkResult.allCompleted) {
+            // Normalizar o resultado da API - allCompleted vem como string da query SQL
+            // Se vier como array, pegar o primeiro elemento
+            let resultData = checkResult;
+            if (Array.isArray(checkResult) && checkResult.length > 0) {
+                resultData = checkResult[0];
+                console.log('checkResult é array, usando primeiro elemento:', resultData);
+            }
+
+            const allCompleted = resultData.allCompleted === 'true' || resultData.allCompleted === true;
+            console.log('allCompleted normalizado:', allCompleted);
+
+            if (!checkResult.success || !allCompleted) {
                 console.log('Nem todos os avaliadores completaram ainda. Marcando apenas este avaliador como completo.');
+                console.log('Debug checkResult:', checkResult);
 
                 const partialPayload = {
                     operation: 'markEvaluatorCompleted',
@@ -229,10 +247,18 @@ export const useEvaluationResponsesApi = () => {
                     updated_at: now
                 };
 
-                return await makeRequest(partialPayload);
+                const result = await makeRequest(partialPayload);
+
+                // Invalida cache após sucesso
+                if (result.success) {
+                    pendingEvaluationsCache.invalidateCache(avaliacao_id);
+                }
+
+                return result;
             }
 
             console.log('Todos os avaliadores completaram! Finalizando avaliação completa.');
+            console.log('Debug checkResult final:', checkResult);
             const payload = {
                 operation: 'submitEvaluation',
                 status: 'completed',
@@ -243,7 +269,14 @@ export const useEvaluationResponsesApi = () => {
                 avaliados_ids: avaliados_ids || []
             };
 
-            return await makeRequest(payload);
+            const result = await makeRequest(payload);
+
+            // Invalida cache após sucesso
+            if (result.success) {
+                pendingEvaluationsCache.invalidateCache(avaliacao_id);
+            }
+
+            return result;
 
         } catch (error) {
             console.error('Erro ao verificar status dos avaliadores:', error);
@@ -258,7 +291,14 @@ export const useEvaluationResponsesApi = () => {
                 avaliados_ids: avaliados_ids || []
             };
 
-            return await makeRequest(payload);
+            const result = await makeRequest(payload);
+
+            // Invalida cache após sucesso mesmo em caso de erro de verificação
+            if (result.success) {
+                pendingEvaluationsCache.invalidateCache(avaliacao_id);
+            }
+
+            return result;
         }
     };
 
