@@ -2,24 +2,19 @@ import React from "react";
 import { Bell, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePendingEvaluationsApi } from "@/hooks/use-pending-evaluations-api";
+import { useEvaluatorStatuses } from "@/hooks/use-evaluator-statuses";
 import { useLocation } from "wouter";
 
 export function PendingEvaluationsNotification() {
   const { pendingEvaluations, loading } = usePendingEvaluationsApi();
-  
-  const actuallyPendingEvaluations = pendingEvaluations?.filter(
-    evaluation => evaluation.status !== 'completed'
-  ) || [];
-  
-  const pendingCount = actuallyPendingEvaluations.length;
+  const { pendingCount, loading: loadingStatuses } = useEvaluatorStatuses(pendingEvaluations);
   const [, setLocation] = useLocation();
 
   // console.log("PendingEvaluationsNotification - todas as avaliações:", pendingEvaluations);
-  // console.log("PendingEvaluationsNotification - avaliações realmente pendentes:", actuallyPendingEvaluations);
-  // console.log("PendingEvaluationsNotification - pendingCount:", pendingCount);
+  // console.log("PendingEvaluationsNotification - avaliações realmente pendentes:", pendingCount);
   // console.log("PendingEvaluationsNotification - loading:", loading);
 
-  if (loading || pendingCount === 0) {
+  if (loading || loadingStatuses || pendingCount === 0) {
     return null;
   }
 

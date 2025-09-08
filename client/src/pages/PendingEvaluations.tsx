@@ -1,21 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ArrowLeft, User, Clock, CheckCircle, AlertCircle, ChevronRight, Crown, Users, UserCheck, Building2, Calendar, FileText, PlayCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { usePendingEvaluationsApi } from "@/hooks/use-pending-evaluations-api";
-import { useEvaluationsAPI } from "@/hooks/use-evaluations-api";
+import { useEvaluatorStatuses } from "@/hooks/use-evaluator-statuses";
 import { useEvaluationQuestions } from "@/hooks/use-evaluation-questions";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function PendingEvaluations() {
   const { pendingEvaluations, loading, error, refetch } = usePendingEvaluationsApi();
-  const { fetchEvaluationById } = useEvaluationsAPI();
+  const { 
+    evaluatorStatuses, 
+    loading: loadingEvaluatorStatuses,
+    pendingCount,
+    inProgressCount, 
+    completedCount,
+    getEvaluationStatus 
+  } = useEvaluatorStatuses(pendingEvaluations);
   const { fetchEvaluationQuestions, loading: questionsLoading } = useEvaluationQuestions();
   const [, setLocation] = useLocation();
   const { authState } = useAuth();
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('pending');
-  const [evaluatorStatuses, setEvaluatorStatuses] = useState<Record<string, 'pending' | 'in_progress' | 'completed'>>({});
-  const [loadingEvaluatorStatuses, setLoadingEvaluatorStatuses] = useState(false);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
@@ -118,30 +123,13 @@ export default function PendingEvaluations() {
   const filteredEvaluations = pendingEvaluations.filter(evaluation => {
     if (selectedFilter === 'all') return true;
     
-    const evaluatorStatus = evaluatorStatuses[evaluation.id] || 'pending';
+    const evaluatorStatus = getEvaluationStatus(evaluation.id);
     return evaluatorStatus === selectedFilter;
   });
 
-  const checkEvaluatorStatus = async (evaluationId: string): Promise<'pending' | 'in_progress' | 'completed'> => {
-    try {
-      const evaluationData = await fetchEvaluationById(evaluationId);
-      if (!evaluationData || !authState?.user?.id) return 'pending';
-
-      const evaluators = evaluationData.avaliadores?.map(item => item.json) || [];
-      const currentUserAsEvaluator = evaluators.find(evaluator => 
-        evaluator.user_id === authState.user!.id
-      );
-
-      return currentUserAsEvaluator?.status || 'pending';
-    } catch (error) {
-      console.error('Erro ao verificar status do avaliador:', error);
-      return 'pending';
-    }
-  };
-
   const handleStartEvaluation = async (evaluation: any) => {
     try {
-      const evaluatorStatus = evaluatorStatuses[evaluation.id] || 'pending';
+      const evaluatorStatus = getEvaluationStatus(evaluation.id);
       
       if (evaluatorStatus === 'completed') {
         alert('Você já completou esta avaliação.');
@@ -158,38 +146,6 @@ export default function PendingEvaluations() {
       alert('Erro ao carregar formulário. Verifique o console para mais detalhes.');
     }
   };
-
-  useEffect(() => {
-    const loadEvaluatorStatuses = async () => {
-      if (!authState?.user?.id || pendingEvaluations.length === 0) return;
-
-      setLoadingEvaluatorStatuses(true);
-      const statuses: Record<string, 'pending' | 'in_progress' | 'completed'> = {};
-      
-      for (const evaluation of pendingEvaluations) {
-        try {
-          const evaluationData = await fetchEvaluationById(evaluation.id);
-          if (evaluationData && authState?.user?.id) {
-            const evaluators = evaluationData.avaliadores?.map(item => item.json) || [];
-            const currentUserAsEvaluator = evaluators.find(evaluator => 
-              evaluator.user_id === authState.user!.id
-            );
-            statuses[evaluation.id] = currentUserAsEvaluator?.status || 'pending';
-          } else {
-            statuses[evaluation.id] = 'pending';
-          }
-        } catch (error) {
-          console.error(`Erro ao verificar status da avaliação ${evaluation.id}:`, error);
-          statuses[evaluation.id] = 'pending';
-        }
-      }
-      
-      setEvaluatorStatuses(statuses);
-      setLoadingEvaluatorStatuses(false);
-    };
-
-    loadEvaluatorStatuses();
-  }, [pendingEvaluations, authState?.user?.id, fetchEvaluationById]);
 
   const statusCounts = {
     all: pendingEvaluations.length,
@@ -385,14 +341,14 @@ export default function PendingEvaluations() {
                             <div className="w-3 h-3 border border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
                             <span>Verificando...</span>
                           </span>
-                        ) : evaluatorStatuses[evaluation.id] && evaluatorStatuses[evaluation.id] !== 'pending' && (
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(evaluatorStatuses[evaluation.id])}`}>
-                            Minha: {getStatusText(evaluatorStatuses[evaluation.id])}
+                        ) : getEvaluationStatus(evaluation.id) !== 'pending' && (
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(getEvaluationStatus(evaluation.id))}`}>
+                            Minha: {getStatusText(getEvaluationStatus(evaluation.id))}
                           </span>
                         )}
                       </div>
                     </div>
-                    {!loadingEvaluatorStatuses && ((evaluatorStatuses[evaluation.id] || 'pending') === 'pending' || (evaluatorStatuses[evaluation.id] || 'pending') === 'in_progress') ? (
+                    {!loadingEvaluatorStatuses && (getEvaluationStatus(evaluation.id) === 'pending' || getEvaluationStatus(evaluation.id) === 'in_progress') ? (
                       <button
                         onClick={() => handleStartEvaluation(evaluation)}
                         disabled={questionsLoading}
@@ -406,12 +362,12 @@ export default function PendingEvaluations() {
                         ) : (
                           <>
                             <span>
-                              {(evaluatorStatuses[evaluation.id] || 'pending') === 'in_progress' ? 'Continuar' : 'Avaliar Agora'}
+                              {getEvaluationStatus(evaluation.id) === 'in_progress' ? 'Continuar' : 'Avaliar Agora'}
                             </span>
                           </>
                         )}
                       </button>
-                    ) : !loadingEvaluatorStatuses && (evaluatorStatuses[evaluation.id] || 'pending') === 'completed' ? (
+                    ) : !loadingEvaluatorStatuses && getEvaluationStatus(evaluation.id) === 'completed' ? (
                       <div className="flex items-center space-x-2 text-green-600 text-sm font-medium">
                         <CheckCircle className="w-4 h-4" />
                         <span>Você já avaliou</span>
