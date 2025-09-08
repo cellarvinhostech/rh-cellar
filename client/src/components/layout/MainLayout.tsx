@@ -1,6 +1,7 @@
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { BottomNav } from "./BottomNav";
+import { Toaster } from "@/components/ui/toaster";
 import { useState } from "react";
 
 interface MainLayoutProps {
@@ -20,6 +21,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         </main>
       </div>
       <BottomNav />
+      <Toaster />
     </div>
   );
 }

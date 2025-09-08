@@ -61,10 +61,6 @@ export default function EditEmployee() {
 
   // Debug: Log dos dados carregados
   useEffect(() => {
-    console.log("Departments loaded:", departments);
-    console.log("Positions loaded:", positions);
-    console.log("Directorates loaded:", directorates);
-    console.log("Hierarchy levels loaded:", hierarchyLevels);
   }, [departments, positions, directorates, hierarchyLevels]);
 
   // Carregar dados do funcionário
@@ -82,7 +78,6 @@ export default function EditEmployee() {
       const employeeData = await getEmployeeById(employeeId);
       setEmployee(employeeData);
       
-      console.log("Employee data loaded:", employeeData);
       
       // Função helper para converter null para string vazia
       const nullToEmpty = (value: string | null): string => value === null ? "" : (value || "");
@@ -122,7 +117,6 @@ export default function EditEmployee() {
 
   // Debug: Log do formData quando muda
   useEffect(() => {
-    console.log("FormData updated:", formData);
   }, [formData]);
 
   const handleSubmit = async (e: React.FormEvent) => {

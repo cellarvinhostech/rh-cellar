@@ -15,7 +15,6 @@ export function useEvaluationsAPI() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Função para fazer requisições à API
   const makeRequest = async (requestData: EvaluationAPIRequest): Promise<any> => {
     try {
       const response = await authenticatedFetch(EVALUATIONS_API_URL, {
@@ -35,7 +34,6 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Função para fazer requisições à API de avaliados
   const makeEvaluatedRequest = async (requestData: EvaluatedAPIRequest): Promise<any> => {
     try {
       const response = await authenticatedFetch(EVALUATED_API_URL, {
@@ -55,7 +53,6 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Função para fazer requisições à API de avaliadores
   const makeEvaluatorRequest = async (requestData: EvaluatorAPIRequest): Promise<any> => {
     try {
       const response = await authenticatedFetch(EVALUATORS_API_URL, {
@@ -75,19 +72,15 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Buscar todas as avaliações
   const fetchEvaluations = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       const response = await makeRequest({ operation: 'readAll' });
-      console.log('Resposta da API de avaliações:', response);
 
-      // A API retorna diretamente um array de avaliações
       if (Array.isArray(response)) {
-        console.log('Definindo avaliações:', response);
-        // Filtrar apenas avaliações válidas (com propriedades obrigatórias)
+
         const validEvaluations = response.filter((evaluation: any) =>
           evaluation &&
           typeof evaluation === 'object' &&
@@ -96,8 +89,7 @@ export function useEvaluationsAPI() {
         );
         setEvaluations(validEvaluations);
       } else if (response.success && Array.isArray(response.data)) {
-        console.log('Definindo avaliações via response.data:', response.data);
-        // Filtrar apenas avaliações válidas (com propriedades obrigatórias)
+
         const validEvaluations = response.data.filter((evaluation: any) =>
           evaluation &&
           typeof evaluation === 'object' &&
@@ -106,7 +98,6 @@ export function useEvaluationsAPI() {
         );
         setEvaluations(validEvaluations);
       } else {
-        console.log('Nenhum dado de avaliação encontrado, definindo array vazio');
         setEvaluations([]);
       }
     } catch (error) {
@@ -122,19 +113,15 @@ export function useEvaluationsAPI() {
     }
   }, [toast]);
 
-  // Buscar avaliação específica com avaliados
   const fetchEvaluationById = useCallback(async (id: string): Promise<APIEvaluationWithEvaluated | null> => {
     try {
       const response = await makeRequest({ operation: 'read', id });
-      console.log('Resposta da API para avaliação específica:', response);
 
-      // A nova estrutura vem como array com um objeto contendo avaliacao e avaliados
       if (Array.isArray(response) && response.length > 0) {
         const evaluationData = response[0] as APIEvaluationWithEvaluated;
         setEvaluationWithEvaluated(evaluationData);
         return evaluationData;
       } else if (response && response.avaliacao) {
-        // Caso a resposta venha diretamente como objeto
         setEvaluationWithEvaluated(response);
         return response;
       }
@@ -151,25 +138,21 @@ export function useEvaluationsAPI() {
     }
   }, [toast]);
 
-  // Função helper para obter lista de avaliados da avaliação atual
   const getEvaluatedEmployees = useCallback((): APIEvaluated[] => {
     if (!evaluationWithEvaluated?.avaliados) return [];
     return evaluationWithEvaluated.avaliados.map(item => item.json);
   }, [evaluationWithEvaluated]);
 
-  // Função helper para verificar se um funcionário já está sendo avaliado
   const isEmployeeEvaluated = useCallback((userId: string): boolean => {
     const evaluatedList = getEvaluatedEmployees();
     return evaluatedList.some(evaluated => evaluated.user_id === userId);
   }, [getEvaluatedEmployees]);
 
-  // Função helper para obter lista de avaliadores da avaliação atual
   const getEvaluators = useCallback((): APIEvaluator[] => {
     if (!evaluationWithEvaluated?.avaliadores) return [];
     return evaluationWithEvaluated.avaliadores.map(item => item.json);
   }, [evaluationWithEvaluated]);
 
-  // Função helper para obter avaliadores de um avaliado específico
   const getEvaluatorsByEvaluatedId = useCallback((evaluatedId: string): {
     leaders: APIEvaluator[];
     teammates: APIEvaluator[];
@@ -189,7 +172,6 @@ export function useEvaluationsAPI() {
     };
   }, [getEvaluators]);
 
-  // Função helper para verificar se um funcionário já é avaliador de um avaliado específico
   const isUserEvaluatorOfEvaluated = useCallback((userId: string, evaluatedId: string): boolean => {
     const evaluators = getEvaluators();
     return evaluators.some(evaluator =>
@@ -197,7 +179,6 @@ export function useEvaluationsAPI() {
     );
   }, [getEvaluators]);
 
-  // Criar nova avaliação
   const createEvaluation = async (data: Partial<APIEvaluation>) => {
     try {
       const response = await makeRequest({ operation: 'create', data });
@@ -208,7 +189,6 @@ export function useEvaluationsAPI() {
           description: "Avaliação criada com sucesso!"
         });
 
-        // Recarregar lista
         await fetchEvaluations();
         return response;
       }
@@ -222,7 +202,6 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Atualizar avaliação
   const updateEvaluation = async (id: string, data: Partial<APIEvaluation>) => {
     try {
       const response = await makeRequest({ operation: 'update', id, data });
@@ -233,7 +212,6 @@ export function useEvaluationsAPI() {
           description: "Avaliação atualizada com sucesso!"
         });
 
-        // Recarregar lista
         await fetchEvaluations();
         return response;
       }
@@ -247,7 +225,6 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Deletar avaliação
   const deleteEvaluation = async (id: string) => {
     try {
       const response = await makeRequest({ operation: 'delete', id });
@@ -258,7 +235,6 @@ export function useEvaluationsAPI() {
           description: "Avaliação excluída com sucesso!"
         });
 
-        // Recarregar lista
         await fetchEvaluations();
         return response;
       }
@@ -272,10 +248,8 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Criar novo avaliado
   const createEvaluated = async (userId: string, evaluationId: string) => {
     try {
-      console.log('Criando avaliado:', { userId, evaluationId });
 
       const response = await makeEvaluatedRequest({
         operation: 'create',
@@ -285,8 +259,6 @@ export function useEvaluationsAPI() {
           status: 'pending'
         }
       });
-
-      console.log('Resposta da criação de avaliado:', response);
 
       if (response.success) {
         toast({
@@ -308,25 +280,19 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Criar múltiplos avaliados em uma única requisição
   const createMultipleEvaluated = async (userIds: string[], evaluationId: string) => {
     try {
-      console.log('Criando múltiplos avaliados:', { userIds, evaluationId });
 
-      // Preparar array de dados dos avaliados
       const evaluatedData = userIds.map(userId => ({
         user_id: userId,
         avaliacao_id: evaluationId,
         status: 'pending' as const
       }));
 
-      // Enviar todos os avaliados em um único request
       const response = await makeEvaluatedRequest({
         operation: 'createMultiple',
         data: evaluatedData
       });
-
-      console.log('Resposta da criação múltipla de avaliados:', response);
 
       if (response.success) {
         toast({
@@ -334,7 +300,6 @@ export function useEvaluationsAPI() {
           description: `${userIds.length} funcionário(s) adicionado(s) à avaliação!`
         });
 
-        // Recarregar os dados da avaliação para atualizar a lista de avaliados
         await fetchEvaluationById(evaluationId);
 
         return response;
@@ -352,17 +317,13 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Remover avaliado
   const deleteEvaluated = async (evaluatedId: string, evaluationId: string) => {
     try {
-      console.log('Removendo avaliado:', { evaluatedId, evaluationId });
 
       const response = await makeEvaluatedRequest({
         operation: 'delete',
         id: evaluatedId
       });
-
-      console.log('Resposta da remoção de avaliado:', response);
 
       if (response.success) {
         toast({
@@ -370,7 +331,6 @@ export function useEvaluationsAPI() {
           description: "Funcionário removido da avaliação com sucesso!"
         });
 
-        // Recarregar os dados da avaliação para atualizar a lista de avaliados
         await fetchEvaluationById(evaluationId);
 
         return response;
@@ -388,15 +348,13 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Criar avaliador
   const createEvaluator = async (
     userId: string,
     evaluationId: string,
     evaluatedId: string,
-    relacionamento: 'leader' | 'teammate' | 'other' | 'self'
+    relacionamento: 'leader' | 'teammate' | 'other'
   ) => {
     try {
-      console.log('Criando avaliador:', { userId, evaluationId, evaluatedId, relacionamento });
 
       const response = await makeEvaluatorRequest({
         operation: 'create',
@@ -409,20 +367,16 @@ export function useEvaluationsAPI() {
         }
       });
 
-      console.log('Resposta da criação de avaliador:', response);
-
       if (response.success) {
         toast({
           title: "Sucesso",
           description: "Avaliador adicionado com sucesso!"
         });
 
-        // Forçar atualização dos dados invalidando o cache
         queryClient.invalidateQueries({ queryKey: [EVALUATIONS_API_URL] });
         queryClient.invalidateQueries({ queryKey: [EVALUATED_API_URL] });
         queryClient.invalidateQueries({ queryKey: [EVALUATORS_API_URL] });
 
-        // Recarregar os dados da avaliação para atualizar a lista de avaliadores
         await fetchEvaluationById(evaluationId);
 
         return response;
@@ -440,7 +394,6 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Criar múltiplos avaliadores em uma única requisição
   const createMultipleEvaluators = async (
     evaluators: Array<{
       userId: string;
@@ -450,9 +403,7 @@ export function useEvaluationsAPI() {
     evaluatedId: string
   ) => {
     try {
-      console.log('Criando múltiplos avaliadores:', { evaluators, evaluationId, evaluatedId });
 
-      // Preparar array de dados dos avaliadores
       const evaluatorsData = evaluators.map(evaluator => ({
         user_id: evaluator.userId,
         avaliacao_id: evaluationId,
@@ -461,13 +412,10 @@ export function useEvaluationsAPI() {
         status: 'pending' as const
       }));
 
-      // Enviar todos os avaliadores em um único request
       const response = await makeEvaluatorRequest({
         operation: 'createMultiple',
         data: evaluatorsData
       });
-
-      console.log('Resposta da criação múltipla de avaliadores:', response);
 
       if (response.success) {
         toast({
@@ -475,12 +423,10 @@ export function useEvaluationsAPI() {
           description: `${evaluators.length} avaliador(es) adicionado(s) com sucesso!`
         });
 
-        // Forçar atualização dos dados invalidando o cache
         queryClient.invalidateQueries({ queryKey: [EVALUATIONS_API_URL] });
         queryClient.invalidateQueries({ queryKey: [EVALUATED_API_URL] });
         queryClient.invalidateQueries({ queryKey: [EVALUATORS_API_URL] });
 
-        // Recarregar os dados da avaliação para obter os IDs reais dos avaliadores
         await fetchEvaluationById(evaluationId);
 
         return response;
@@ -498,17 +444,13 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Remover avaliador
   const deleteEvaluator = async (evaluatorId: string, evaluationId: string) => {
     try {
-      console.log('Removendo avaliador:', { evaluatorId, evaluationId });
 
       const response = await makeEvaluatorRequest({
         operation: 'delete',
         id: evaluatorId
       });
-
-      console.log('Resposta da remoção de avaliador:', response);
 
       if (response.success) {
         toast({
@@ -516,7 +458,6 @@ export function useEvaluationsAPI() {
           description: "Avaliador removido com sucesso!"
         });
 
-        // Forçar atualização dos dados invalidando o cache
         queryClient.invalidateQueries({ queryKey: [EVALUATIONS_API_URL] });
         queryClient.invalidateQueries({ queryKey: [EVALUATED_API_URL] });
         queryClient.invalidateQueries({ queryKey: [EVALUATORS_API_URL] });
@@ -540,7 +481,6 @@ export function useEvaluationsAPI() {
     }
   };
 
-  // Carregar avaliações na inicialização
   useEffect(() => {
     fetchEvaluations();
   }, []);

@@ -15,6 +15,9 @@ export const API_CONFIG = {
     UNITS: "/webhook/46083d19-8a43-4286-872a-d155d1e154f1",
     FORMS: "/webhook/d5c2cb69-640b-40ea-8864-241c6d46c46b",
     FORM_QUESTIONS: "/webhook/f74e24f3-eb53-456e-afa3-c4553519c046",
+    EVALUATION_QUESTIONS: "/webhook/questoes-avaliacao",
+    EVALUATION_RESPONSES: "/webhook/7f1f8f3b-38ce-43d5-9e6f-ce475e3eaf19",
+    PENDING_EVALUATIONS: "/webhook/f9211713-cc4a-4cb8-8dcc-d1aa236a8fed",
   },
   STORAGE: {
     TOKEN_COOKIE: "cellarRhAuth",
