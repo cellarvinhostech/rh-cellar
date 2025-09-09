@@ -1,150 +1,150 @@
 import { useState, useEffect, useCallback } from 'react';
-import { authenticatedFetch } from '@/utils/api';
-import { useAuth } from './use-auth';
-import type { APIEvaluator } from '@/types/hr';
+import { pendingEvaluationsCache } from '@/utils/api-cache';
+import { useAuth } from '@/hooks/use-auth';
+import type { PendingEvaluation, EvaluatorStatuses } from '@/types/evaluations';
 
-const EVALUATORS_API_URL = 'https://integra.cellarvinhos.com/webhook/e8b30622-565e-4c2e-a51b-b589ebd2de5a';
+/**
+ * Hook para avaliações pendentes com cache avançado
+ */
+export const usePendingEvaluations = () => {
+    const [pendingEvaluations, setPendingEvaluations] = useState<PendingEvaluation[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const { authState } = useAuth();
 
-interface PendingEvaluationSummary {
-  id: string;
-  evaluationName: string;
-  evaluatedName: string;
-  evaluatedId: string;
-  department_name?: string;
-  status: 'pending' | 'in_progress' | 'completed';
-  relacionamento: 'leader' | 'teammate' | 'other';
-  avaliacao_id: string;
-  avaliacao_name: string;
-  avaliacao_description?: string;
-  avaliacao_start_date: string;
-  avaliacao_end_date: string;
-  avaliacao_form_id: string;
-}
-
-export function usePendingEvaluations() {
-  const [pendingEvaluations, setPendingEvaluations] = useState<PendingEvaluationSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { authState } = useAuth();
-
-  const isEvaluationActive = (evaluation: PendingEvaluationSummary) => {
-    const now = new Date();
-    const startDate = evaluation.avaliacao_start_date ? new Date(evaluation.avaliacao_start_date) : null;
-    const endDate = evaluation.avaliacao_end_date ? new Date(evaluation.avaliacao_end_date) : null;
-
-    if (!startDate) return true;
-
-    if (endDate && now > endDate) return false;
-
-    if (now < startDate) return false;
-
-    return true;
-  };
-
-  const fetchPendingEvaluations = useCallback(async () => {
-    if (!authState.user?.id) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const storedPendingEvaluations = localStorage.getItem('pending_evaluations');
-
-      if (storedPendingEvaluations) {
-        const pendingEvaluationsData = JSON.parse(storedPendingEvaluations);
-
-        if (Array.isArray(pendingEvaluationsData)) {
-          const pendingEvaluationsSummary: PendingEvaluationSummary[] = pendingEvaluationsData.map((evaluation: any) => {
-            const evaluatedName = evaluation.first_name && evaluation.last_name
-              ? `${evaluation.first_name} ${evaluation.last_name}`.trim()
-              : 'Funcionário';
-
-            return {
-              id: evaluation.id || '',
-              evaluationName: evaluation.avaliacao_name || 'Avaliação sem nome',
-              evaluatedName,
-              evaluatedId: evaluation.avaliado_id,
-              department_name: evaluation.department_name,
-              status: evaluation.status,
-              relacionamento: evaluation.relacionamento,
-              avaliacao_id: evaluation.avaliacao_id,
-              avaliacao_name: evaluation.avaliacao_name,
-              avaliacao_description: evaluation.avaliacao_description,
-              avaliacao_start_date: evaluation.avaliacao_start_date,
-              avaliacao_end_date: evaluation.avaliacao_end_date,
-              avaliacao_form_id: evaluation.avaliacao_form_id,
-            };
-          });
-
-          setPendingEvaluations(pendingEvaluationsSummary);
-          setLoading(false);
-          return;
+    const fetchPendingEvaluations = useCallback(async (forceRefresh = false) => {
+        if (!authState?.user?.id) {
+            setError('Usuário não autenticado');
+            return;
         }
-      }
 
-      const response = await authenticatedFetch(EVALUATORS_API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          operation: 'readAll'
-        }),
-      });
+        setLoading(true);
+        setError(null);
 
-      if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status}`);
-      }
+        try {
+            let evaluations: PendingEvaluation[];
 
-      const data = await response.json();
+            if (forceRefresh) {
+                evaluations = await pendingEvaluationsCache.refreshCache();
+            } else {
+                evaluations = await pendingEvaluationsCache.getPendingEvaluations();
+            }
 
-      if (data.success && Array.isArray(data.pending_evaluations)) {
-        const pendingEvaluationsSummary: PendingEvaluationSummary[] = data.pending_evaluations.map((evaluation: any) => {
-          const evaluatedName = evaluation.first_name && evaluation.last_name
-            ? `${evaluation.first_name} ${evaluation.last_name}`.trim()
-            : 'Funcionário';
+            setPendingEvaluations(evaluations);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            setError(errorMessage);
+            console.error('Erro ao buscar avaliações pendentes:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [authState?.user?.id]);
 
-          return {
-            id: evaluation.id || '',
-            evaluationName: evaluation.avaliacao_name || 'Avaliação sem nome',
-            evaluatedName,
-            evaluatedId: evaluation.avaliado_id,
-            department_name: evaluation.department_name,
-            status: evaluation.status,
-            relacionamento: evaluation.relacionamento,
-            avaliacao_id: evaluation.avaliacao_id,
-            avaliacao_name: evaluation.avaliacao_name,
-            avaliacao_description: evaluation.avaliacao_description,
-            avaliacao_start_date: evaluation.avaliacao_start_date,
-            avaliacao_end_date: evaluation.avaliacao_end_date,
-            avaliacao_form_id: evaluation.avaliacao_form_id,
-          };
+    const refetch = useCallback(() => {
+        fetchPendingEvaluations(true);
+    }, [fetchPendingEvaluations]);
+
+    // Carrega dados iniciais
+    useEffect(() => {
+        if (authState?.user?.id) {
+            fetchPendingEvaluations();
+        }
+    }, [authState?.user?.id, fetchPendingEvaluations]);
+
+    // Subscreve para atualizações do cache
+    useEffect(() => {
+        const unsubscribe = pendingEvaluationsCache.subscribe((evaluations) => {
+            setPendingEvaluations(evaluations);
         });
 
-        setPendingEvaluations(pendingEvaluationsSummary);
-      } else {
-        setPendingEvaluations([]);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar avaliações pendentes:', error);
-      setError('Erro ao carregar avaliações pendentes');
-      setPendingEvaluations([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [authState.user?.id]);
+        return unsubscribe;
+    }, []);
 
-  useEffect(() => {
-    fetchPendingEvaluations();
-  }, [fetchPendingEvaluations]);
+    return {
+        pendingEvaluations,
+        loading,
+        error,
+        refetch,
+        fetchPendingEvaluations
+    };
+};
 
-  const activeEvaluations = pendingEvaluations.filter(isEvaluationActive);
+/**
+ * Hook para status dos avaliadores com cache avançado
+ */
+export const useEvaluatorStatuses = (evaluations: PendingEvaluation[]) => {
+    const { authState } = useAuth();
+    const [evaluatorStatuses, setEvaluatorStatuses] = useState<EvaluatorStatuses>({});
+    const [loading, setLoading] = useState(false);
 
-  return {
-    pendingEvaluations: activeEvaluations,
-    loading,
-    error,
-    refetch: fetchPendingEvaluations,
-    pendingCount: activeEvaluations.length
-  };
-}
+    const loadEvaluatorStatuses = useCallback(async () => {
+        if (!authState?.user?.id || evaluations.length === 0) {
+            setEvaluatorStatuses({});
+            return;
+        }
+
+        setLoading(true);
+        const statuses: EvaluatorStatuses = {};
+
+        // Carrega status em paralelo para melhor performance
+        const statusPromises = evaluations.map(async (evaluation) => {
+            try {
+                const status = await pendingEvaluationsCache.getEvaluatorStatus(
+                    evaluation.id,
+                    authState.user!.id
+                );
+                return { evaluationId: evaluation.id, status };
+            } catch (error) {
+                console.error(`Erro ao verificar status da avaliação ${evaluation.id}:`, error);
+                return { evaluationId: evaluation.id, status: 'pending' as const };
+            }
+        });
+
+        try {
+            const results = await Promise.all(statusPromises);
+            results.forEach(({ evaluationId, status }) => {
+                statuses[evaluationId] = status;
+            });
+            setEvaluatorStatuses(statuses);
+        } catch (error) {
+            console.error('Erro ao carregar status dos avaliadores:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [evaluations, authState?.user?.id]);
+
+    useEffect(() => {
+        loadEvaluatorStatuses();
+    }, [loadEvaluatorStatuses]);
+
+    // Funções utilitárias
+    const getEvaluationStatus = useCallback((evaluationId: string) => {
+        return evaluatorStatuses[evaluationId] || 'pending';
+    }, [evaluatorStatuses]);
+
+    const getCountByStatus = useCallback((status: 'pending' | 'in_progress' | 'completed'): number => {
+        return Object.values(evaluatorStatuses).filter(s => s === status).length;
+    }, [evaluatorStatuses]);
+
+    const pendingCount = getCountByStatus('pending');
+    const inProgressCount = getCountByStatus('in_progress');
+    const completedCount = getCountByStatus('completed');
+
+    // Invalida cache quando uma avaliação é submetida
+    const invalidateEvaluationCache = useCallback((evaluationId: string) => {
+        pendingEvaluationsCache.invalidateCache(evaluationId);
+        loadEvaluatorStatuses();
+    }, [loadEvaluatorStatuses]);
+
+    return {
+        evaluatorStatuses,
+        loading,
+        getEvaluationStatus,
+        getCountByStatus,
+        pendingCount,
+        inProgressCount,
+        completedCount,
+        invalidateEvaluationCache,
+        refetch: loadEvaluatorStatuses
+    };
+};

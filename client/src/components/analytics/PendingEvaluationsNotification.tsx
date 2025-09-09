@@ -1,12 +1,16 @@
 import React from "react";
 import { Bell, UserCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { usePendingEvaluationsOptimized, useEvaluatorStatusesOptimized } from "@/hooks/use-pending-evaluations-optimized";
+import {
+  usePendingEvaluations,
+  useEvaluatorStatuses,
+} from "@/hooks/use-pending-evaluations";
 import { useLocation } from "wouter";
 
-export function PendingEvaluationsNotification() {
-  const { pendingEvaluations, loading } = usePendingEvaluationsOptimized();
-  const { pendingCount, loading: loadingStatuses } = useEvaluatorStatusesOptimized(pendingEvaluations);
+export default function PendingEvaluationsNotification() {
+  const { pendingEvaluations, loading } = usePendingEvaluations();
+  const { pendingCount, loading: loadingStatuses } =
+    useEvaluatorStatuses(pendingEvaluations);
   const [, setLocation] = useLocation();
 
   // console.log("PendingEvaluationsNotification - todas as avaliações:", pendingEvaluations);

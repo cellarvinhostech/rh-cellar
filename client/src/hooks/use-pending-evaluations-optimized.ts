@@ -1,24 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { pendingEvaluationsCache } from '@/utils/api-cache';
 import { useAuth } from '@/hooks/use-auth';
-
-export interface PendingEvaluation {
-    id: string;
-    name: string;
-    description?: string;
-    start_date?: string;
-    end_data?: string;
-    form_id: string;
-    meta?: number | null;
-    peso_lider: number;
-    peso_equipe: number;
-    peso_outros: number;
-    status: 'pending' | 'in_progress' | 'completed';
-    created_by: string;
-    updated_by: string;
-    created_at: string;
-    updated_at: string;
-}
+import type { PendingEvaluation, EvaluatorStatuses } from '@/types/evaluations';
 
 /**
  * Hook otimizado para avaliações pendentes com cache
@@ -85,10 +68,6 @@ export const usePendingEvaluationsOptimized = () => {
         fetchPendingEvaluations
     };
 };
-
-export interface EvaluatorStatuses {
-    [evaluationId: string]: 'pending' | 'in_progress' | 'completed';
-}
 
 /**
  * Hook otimizado para status dos avaliadores com cache
