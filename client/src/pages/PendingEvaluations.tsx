@@ -1,35 +1,56 @@
 import React, { useState } from "react";
-import { ArrowLeft, User, Clock, CheckCircle, AlertCircle, ChevronRight, Crown, Users, UserCheck, Building2, Calendar, FileText, PlayCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  User,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  ChevronRight,
+  Crown,
+  Users,
+  UserCheck,
+  Building2,
+  Calendar,
+  FileText,
+  PlayCircle,
+} from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { usePendingEvaluationsApi } from "@/hooks/use-pending-evaluations-api";
-import { useEvaluatorStatuses } from "@/hooks/use-evaluator-statuses";
+import {
+  usePendingEvaluations,
+  useEvaluatorStatuses,
+} from "@/hooks/use-pending-evaluations";
+import type { PendingEvaluation } from "@/types/evaluations";
 import { useEvaluationQuestions } from "@/hooks/use-evaluation-questions";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function PendingEvaluations() {
-  const { pendingEvaluations, loading, error, refetch } = usePendingEvaluationsApi();
-  const { 
-    evaluatorStatuses, 
+  const { pendingEvaluations, loading, error, refetch } =
+    usePendingEvaluations();
+  const {
+    evaluatorStatuses,
     loading: loadingEvaluatorStatuses,
     pendingCount,
-    inProgressCount, 
+    inProgressCount,
     completedCount,
-    getEvaluationStatus 
+    getEvaluationStatus,
   } = useEvaluatorStatuses(pendingEvaluations);
-  const { fetchEvaluationQuestions, loading: questionsLoading } = useEvaluationQuestions();
+  const { fetchEvaluationQuestions, loading: questionsLoading } =
+    useEvaluationQuestions();
   const [, setLocation] = useLocation();
   const { authState } = useAuth();
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('pending');
+  const [selectedFilter, setSelectedFilter] = useState<
+    "all" | "pending" | "in_progress" | "completed"
+  >("pending");
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
+      return date.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
       });
     } catch (error) {
       return dateString;
@@ -38,11 +59,11 @@ export default function PendingEvaluations() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return CheckCircle;
-      case 'in_progress':
+      case "in_progress":
         return Clock;
-      case 'pending':
+      case "pending":
       default:
         return AlertCircle;
     }
@@ -50,108 +71,127 @@ export default function PendingEvaluations() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'text-green-600 bg-green-100';
-      case 'in_progress':
-        return 'text-blue-600 bg-blue-100';
-      case 'pending':
+      case "completed":
+        return "text-green-600 bg-green-100";
+      case "in_progress":
+        return "text-blue-600 bg-blue-100";
+      case "pending":
       default:
-        return 'text-amber-600 bg-amber-100';
+        return "text-amber-600 bg-amber-100";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'Concluída';
-      case 'in_progress':
-        return 'Em Progresso';
-      case 'pending':
+      case "completed":
+        return "Concluída";
+      case "in_progress":
+        return "Em Progresso";
+      case "pending":
       default:
-        return 'Pendente';
+        return "Pendente";
     }
   };
 
   const getRelacionamentoText = (relacionamento: string) => {
     switch (relacionamento) {
-      case 'leader':
-        return 'Liderança';
-      case 'teammate':
-        return 'Colega de Equipe';
-      case 'subordinate':
-        return 'Subordinado';
-      case 'peer':
-        return 'Par Hierárquico';
-      case 'other':
+      case "leader":
+        return "Liderança";
+      case "teammate":
+        return "Colega de Equipe";
+      case "subordinate":
+        return "Subordinado";
+      case "peer":
+        return "Par Hierárquico";
+      case "other":
       default:
-        return 'Outro';
+        return "Outro";
     }
   };
 
   const getRelacionamentoColor = (relacionamento: string) => {
     switch (relacionamento) {
-      case 'leader':
-        return 'text-purple-700 bg-purple-50 border-purple-200';
-      case 'teammate':
-        return 'text-blue-700 bg-blue-50 border-blue-200';
-      case 'subordinate':
-        return 'text-green-700 bg-green-50 border-green-200';
-      case 'peer':
-        return 'text-orange-700 bg-orange-50 border-orange-200';
-      case 'other':
+      case "leader":
+        return "text-purple-700 bg-purple-50 border-purple-200";
+      case "teammate":
+        return "text-blue-700 bg-blue-50 border-blue-200";
+      case "subordinate":
+        return "text-green-700 bg-green-50 border-green-200";
+      case "peer":
+        return "text-orange-700 bg-orange-50 border-orange-200";
+      case "other":
       default:
-        return 'text-slate-700 bg-slate-50 border-slate-200';
+        return "text-slate-700 bg-slate-50 border-slate-200";
     }
   };
 
   const getRelacionamentoIcon = (relacionamento: string) => {
     switch (relacionamento) {
-      case 'leader':
+      case "leader":
         return Crown;
-      case 'teammate':
+      case "teammate":
         return Users;
-      case 'subordinate':
+      case "subordinate":
         return UserCheck;
-      case 'peer':
+      case "peer":
         return Building2;
-      case 'other':
+      case "other":
       default:
         return User;
     }
   };
 
-  const filteredEvaluations = pendingEvaluations.filter(evaluation => {
-    if (selectedFilter === 'all') return true;
-    
-    const evaluatorStatus = getEvaluationStatus(evaluation.id);
-    return evaluatorStatus === selectedFilter;
-  });
+  const filteredEvaluations = pendingEvaluations.filter(
+    (evaluation: PendingEvaluation) => {
+      if (selectedFilter === "all") return true;
 
-  const handleStartEvaluation = async (evaluation: any) => {
+      const evaluatorStatus = getEvaluationStatus(evaluation.id);
+      return evaluatorStatus === selectedFilter;
+    }
+  );
+
+  const handleStartEvaluation = async (evaluation: PendingEvaluation) => {
     try {
       const evaluatorStatus = getEvaluationStatus(evaluation.id);
-      
-      if (evaluatorStatus === 'completed') {
-        alert('Você já completou esta avaliação.');
+
+      if (evaluatorStatus === "completed") {
+        alert("Você já completou esta avaliação.");
         return;
       }
 
       const formData = await fetchEvaluationQuestions(evaluation.id);
-      
+
       if (formData) {
         setLocation(`/evaluation/${evaluation.id}/form`);
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar formulário:', error);
-      alert('Erro ao carregar formulário. Verifique o console para mais detalhes.');
+      console.error("❌ Erro ao carregar formulário:", error);
+      alert(
+        "Erro ao carregar formulário. Verifique o console para mais detalhes."
+      );
     }
   };
 
   const statusCounts = {
     all: pendingEvaluations.length,
-    pending: loadingEvaluatorStatuses ? 0 : pendingEvaluations.filter(e => (evaluatorStatuses[e.id] || 'pending') === 'pending').length,
-    in_progress: loadingEvaluatorStatuses ? 0 : pendingEvaluations.filter(e => (evaluatorStatuses[e.id] || 'pending') === 'in_progress').length,
-    completed: loadingEvaluatorStatuses ? 0 : pendingEvaluations.filter(e => (evaluatorStatuses[e.id] || 'pending') === 'completed').length,
+    pending: loadingEvaluatorStatuses
+      ? 0
+      : pendingEvaluations.filter(
+          (e: PendingEvaluation) =>
+            (evaluatorStatuses[e.id] || "pending") === "pending"
+        ).length,
+    in_progress: loadingEvaluatorStatuses
+      ? 0
+      : pendingEvaluations.filter(
+          (e: PendingEvaluation) =>
+            (evaluatorStatuses[e.id] || "pending") === "in_progress"
+        ).length,
+    completed: loadingEvaluatorStatuses
+      ? 0
+      : pendingEvaluations.filter(
+          (e: PendingEvaluation) =>
+            (evaluatorStatuses[e.id] || "pending") === "completed"
+        ).length,
   };
 
   if (loading) {
@@ -164,8 +204,12 @@ export default function PendingEvaluations() {
                 <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
               </div>
               <div className="text-center">
-                <h3 className="text-lg font-semibold text-slate-900 mb-1">Carregando avaliações</h3>
-                <p className="text-slate-600 text-sm">Aguarde enquanto buscamos suas avaliações...</p>
+                <h3 className="text-lg font-semibold text-slate-900 mb-1">
+                  Carregando avaliações
+                </h3>
+                <p className="text-slate-600 text-sm">
+                  Aguarde enquanto buscamos suas avaliações...
+                </p>
               </div>
             </div>
           </div>
@@ -182,29 +226,41 @@ export default function PendingEvaluations() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => setLocation('/')}
+                onClick={() => setLocation("/")}
                 className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
                 title="Voltar ao Dashboard"
               >
                 <ArrowLeft className="w-5 h-5 text-slate-600" />
               </button>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Minhas Avaliações Pendentes</h1>
+                <h1 className="text-xl font-bold text-slate-900">
+                  Minhas Avaliações Pendentes
+                </h1>
                 <p className="text-slate-600 text-sm">
-                  {filteredEvaluations.length === 0 && pendingEvaluations.length > 0
+                  {filteredEvaluations.length === 0 &&
+                  pendingEvaluations.length > 0
                     ? "Nenhuma avaliação encontrada com os filtros selecionados"
-                    : pendingEvaluations.length === 0 
+                    : pendingEvaluations.length === 0
                     ? "Nenhuma avaliação encontrada"
-                    : `${filteredEvaluations.length} de ${pendingEvaluations.length} avaliação${pendingEvaluations.length !== 1 ? 'ões' : ''} ${filteredEvaluations.length !== pendingEvaluations.length ? 'filtrada' + (filteredEvaluations.length !== 1 ? 's' : '') : 'encontrada' + (pendingEvaluations.length !== 1 ? 's' : '')}`
-                  }
+                    : `${filteredEvaluations.length} de ${
+                        pendingEvaluations.length
+                      } avaliação${
+                        pendingEvaluations.length !== 1 ? "ões" : ""
+                      } ${
+                        filteredEvaluations.length !== pendingEvaluations.length
+                          ? "filtrada" +
+                            (filteredEvaluations.length !== 1 ? "s" : "")
+                          : "encontrada" +
+                            (pendingEvaluations.length !== 1 ? "s" : "")
+                      }`}
                 </p>
               </div>
             </div>
-            
-            {selectedFilter !== 'pending' && (
+
+            {selectedFilter !== "pending" && (
               <button
                 onClick={() => {
-                  setSelectedFilter('pending');
+                  setSelectedFilter("pending");
                 }}
                 className="text-sm text-slate-600 hover:text-slate-800 underline"
               >
@@ -220,7 +276,9 @@ export default function PendingEvaluations() {
             <div className="flex items-center space-x-2">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-red-800 font-medium">Erro ao carregar avaliações</p>
+                <p className="text-red-800 font-medium">
+                  Erro ao carregar avaliações
+                </p>
                 <p className="text-red-700 text-sm">{error}</p>
                 <button
                   onClick={refetch}
@@ -236,7 +294,9 @@ export default function PendingEvaluations() {
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-            <span className="text-sm font-medium text-slate-700">Filtrar por meu status:</span>
+            <span className="text-sm font-medium text-slate-700">
+              Filtrar por meu status:
+            </span>
             {loadingEvaluatorStatuses ? (
               <div className="flex items-center space-x-2 text-slate-500">
                 <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
@@ -245,18 +305,30 @@ export default function PendingEvaluations() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {[
-                  { key: 'all', label: 'Todas', count: statusCounts.all },
-                  { key: 'pending', label: 'Pendentes', count: statusCounts.pending },
-                  { key: 'in_progress', label: 'Em Progresso', count: statusCounts.in_progress },
-                  { key: 'completed', label: 'Concluídas', count: statusCounts.completed },
+                  { key: "all", label: "Todas", count: statusCounts.all },
+                  {
+                    key: "pending",
+                    label: "Pendentes",
+                    count: statusCounts.pending,
+                  },
+                  {
+                    key: "in_progress",
+                    label: "Em Progresso",
+                    count: statusCounts.in_progress,
+                  },
+                  {
+                    key: "completed",
+                    label: "Concluídas",
+                    count: statusCounts.completed,
+                  },
                 ].map((filter) => (
                   <button
                     key={filter.key}
                     onClick={() => setSelectedFilter(filter.key as any)}
                     className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                       selectedFilter === filter.key
-                        ? 'bg-primary text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        ? "bg-primary text-white"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                     }`}
                   >
                     {filter.label} ({filter.count})
@@ -275,30 +347,28 @@ export default function PendingEvaluations() {
                 <FileText className="w-8 h-8 text-slate-400" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                {selectedFilter === 'all' 
-                  ? 'Nenhuma avaliação encontrada'
-                  : selectedFilter === 'pending'
-                  ? 'Nenhuma avaliação pendente para você'
-                  : selectedFilter === 'in_progress'  
-                  ? 'Nenhuma avaliação em progresso'
-                  : 'Nenhuma avaliação concluída por você'
-                }
+                {selectedFilter === "all"
+                  ? "Nenhuma avaliação encontrada"
+                  : selectedFilter === "pending"
+                  ? "Nenhuma avaliação pendente para você"
+                  : selectedFilter === "in_progress"
+                  ? "Nenhuma avaliação em progresso"
+                  : "Nenhuma avaliação concluída por você"}
               </h3>
               <p className="text-slate-600 text-sm">
-                {selectedFilter === 'all'
-                  ? 'Você não possui avaliações no momento.'
-                  : selectedFilter === 'pending'
-                  ? 'Você não possui avaliações pendentes para avaliar.'
-                  : selectedFilter === 'in_progress'
-                  ? 'Você não possui avaliações em progresso no momento.'
-                  : 'Você não completou nenhuma avaliação ainda.'
-                }
+                {selectedFilter === "all"
+                  ? "Você não possui avaliações no momento."
+                  : selectedFilter === "pending"
+                  ? "Você não possui avaliações pendentes para avaliar."
+                  : selectedFilter === "in_progress"
+                  ? "Você não possui avaliações em progresso no momento."
+                  : "Você não completou nenhuma avaliação ainda."}
               </p>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredEvaluations.map((evaluation) => (
+            {filteredEvaluations.map((evaluation: PendingEvaluation) => (
               <div
                 key={evaluation.id}
                 className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all duration-200"
@@ -322,9 +392,13 @@ export default function PendingEvaluations() {
                         <p className="text-slate-500 text-xs flex items-center space-x-1 mt-1">
                           <Calendar className="w-3 h-3" />
                           <span>
-                            {evaluation.start_date && formatDate(evaluation.start_date)}
-                            {evaluation.start_date && evaluation.end_data && ' - '}
-                            {evaluation.end_data && formatDate(evaluation.end_data)}
+                            {evaluation.start_date &&
+                              formatDate(evaluation.start_date)}
+                            {evaluation.start_date &&
+                              evaluation.end_data &&
+                              " - "}
+                            {evaluation.end_data &&
+                              formatDate(evaluation.end_data)}
                           </span>
                         </p>
                       )}
@@ -333,7 +407,11 @@ export default function PendingEvaluations() {
                   <div className="flex items-center space-x-3">
                     <div className="text-right">
                       <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(evaluation.status)}`}>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                            evaluation.status
+                          )}`}
+                        >
                           {getStatusText(evaluation.status)}
                         </span>
                         {loadingEvaluatorStatuses ? (
@@ -341,14 +419,25 @@ export default function PendingEvaluations() {
                             <div className="w-3 h-3 border border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
                             <span>Verificando...</span>
                           </span>
-                        ) : getEvaluationStatus(evaluation.id) !== 'pending' && (
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(getEvaluationStatus(evaluation.id))}`}>
-                            Minha: {getStatusText(getEvaluationStatus(evaluation.id))}
-                          </span>
+                        ) : (
+                          getEvaluationStatus(evaluation.id) !== "pending" && (
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                                getEvaluationStatus(evaluation.id)
+                              )}`}
+                            >
+                              Minha:{" "}
+                              {getStatusText(
+                                getEvaluationStatus(evaluation.id)
+                              )}
+                            </span>
+                          )
                         )}
                       </div>
                     </div>
-                    {!loadingEvaluatorStatuses && (getEvaluationStatus(evaluation.id) === 'pending' || getEvaluationStatus(evaluation.id) === 'in_progress') ? (
+                    {!loadingEvaluatorStatuses &&
+                    (getEvaluationStatus(evaluation.id) === "pending" ||
+                      getEvaluationStatus(evaluation.id) === "in_progress") ? (
                       <button
                         onClick={() => handleStartEvaluation(evaluation)}
                         disabled={questionsLoading}
@@ -362,12 +451,16 @@ export default function PendingEvaluations() {
                         ) : (
                           <>
                             <span>
-                              {getEvaluationStatus(evaluation.id) === 'in_progress' ? 'Continuar' : 'Avaliar Agora'}
+                              {getEvaluationStatus(evaluation.id) ===
+                              "in_progress"
+                                ? "Continuar"
+                                : "Avaliar Agora"}
                             </span>
                           </>
                         )}
                       </button>
-                    ) : !loadingEvaluatorStatuses && getEvaluationStatus(evaluation.id) === 'completed' ? (
+                    ) : !loadingEvaluatorStatuses &&
+                      getEvaluationStatus(evaluation.id) === "completed" ? (
                       <div className="flex items-center space-x-2 text-green-600 text-sm font-medium">
                         <CheckCircle className="w-4 h-4" />
                         <span>Você já avaliou</span>
@@ -390,25 +483,37 @@ export default function PendingEvaluations() {
           <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg border border-slate-200 p-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
               <div className="text-sm font-medium text-slate-700">
-                Total de avaliações: <span className="text-slate-900 font-semibold">{filteredEvaluations.length}</span>
+                Total de avaliações:{" "}
+                <span className="text-slate-900 font-semibold">
+                  {filteredEvaluations.length}
+                </span>
               </div>
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <div className="flex items-center space-x-1.5">
                   <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                   <span className="text-amber-700">
-                    Para avaliar: <span className="font-semibold">{statusCounts.pending}</span>
+                    Para avaliar:{" "}
+                    <span className="font-semibold">
+                      {statusCounts.pending}
+                    </span>
                   </span>
                 </div>
                 <div className="flex items-center space-x-1.5">
                   <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                   <span className="text-blue-700">
-                    Em progresso: <span className="font-semibold">{statusCounts.in_progress}</span>
+                    Em progresso:{" "}
+                    <span className="font-semibold">
+                      {statusCounts.in_progress}
+                    </span>
                   </span>
                 </div>
                 <div className="flex items-center space-x-1.5">
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   <span className="text-green-700">
-                    Avaliadas por mim: <span className="font-semibold">{statusCounts.completed}</span>
+                    Avaliadas por mim:{" "}
+                    <span className="font-semibold">
+                      {statusCounts.completed}
+                    </span>
                   </span>
                 </div>
               </div>

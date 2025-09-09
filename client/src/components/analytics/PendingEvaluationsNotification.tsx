@@ -1,20 +1,47 @@
 import React from "react";
-import { Bell, UserCheck } from "lucide-react";
+import { Bell, UserCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { usePendingEvaluationsApi } from "@/hooks/use-pending-evaluations-api";
-import { useEvaluatorStatuses } from "@/hooks/use-evaluator-statuses";
+import {
+  usePendingEvaluations,
+  useEvaluatorStatuses,
+} from "@/hooks/use-pending-evaluations";
 import { useLocation } from "wouter";
 
-export function PendingEvaluationsNotification() {
-  const { pendingEvaluations, loading } = usePendingEvaluationsApi();
-  const { pendingCount, loading: loadingStatuses } = useEvaluatorStatuses(pendingEvaluations);
+export default function PendingEvaluationsNotification() {
+  const { pendingEvaluations, loading } = usePendingEvaluations();
+  const { pendingCount, loading: loadingStatuses } =
+    useEvaluatorStatuses(pendingEvaluations);
   const [, setLocation] = useLocation();
 
   // console.log("PendingEvaluationsNotification - todas as avaliações:", pendingEvaluations);
   // console.log("PendingEvaluationsNotification - avaliações realmente pendentes:", pendingCount);
   // console.log("PendingEvaluationsNotification - loading:", loading);
 
-  if (loading || loadingStatuses || pendingCount === 0) {
+  if (loading || loadingStatuses) {
+    return (
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-6">
+        <div className="flex items-start space-x-3">
+          <div className="flex-shrink-0">
+            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+              <Loader2 className="w-5 h-5 text-amber-600 animate-spin" />
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-2">
+              <div className="h-6 bg-amber-200 rounded animate-pulse w-48"></div>
+              <div className="h-8 bg-amber-200 rounded animate-pulse w-24"></div>
+            </div>
+
+            <div className="h-4 bg-amber-200 rounded animate-pulse w-3/4 mb-3"></div>
+            <div className="h-3 bg-amber-200 rounded animate-pulse w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (pendingCount === 0) {
     return null;
   }
 

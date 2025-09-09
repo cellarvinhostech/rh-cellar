@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { authenticatedFetch } from '@/utils/api';
 import { API_CONFIG } from '@/utils/constants';
+import { pendingEvaluationsCache } from '@/utils/api-cache';
 
 export interface EvaluationResponse {
     id: string;
@@ -207,58 +208,81 @@ export const useEvaluationResponsesApi = () => {
         try {
             const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
+            console.log('=== Iniciando submitEvaluation ===');
+            console.log('avaliador_id:', avaliador_id);
+            console.log('avaliacao_id:', avaliacao_id);
+            console.log('avaliados_ids:', avaliados_ids);
+
+            const markCompletedPayload = {
+                operation: 'markEvaluatorCompleted',
+                avaliador_id: avaliador_id,
+                avaliacao_id: avaliacao_id,
+                avaliados_ids: avaliados_ids || [],
+                status: 'completed',
+                completed_at: now,
+                updated_at: now
+            };
+
+            console.log('=== Executando markEvaluatorCompleted ===');
+            const markResult = await makeRequest(markCompletedPayload);
+            console.log('markResult:', markResult);
+
             const checkPayload = {
                 operation: 'checkAllEvaluatorsCompleted',
                 avaliacao_id: avaliacao_id,
-                avaliador_id: avaliador_id, // Para debug
-                timestamp: now // Para debug
+                avaliador_id: avaliador_id,
+                timestamp: now
             };
 
             const checkResult = await makeRequest(checkPayload);
+            console.log('checkResult completo:', JSON.stringify(checkResult, null, 2));
 
-            if (!checkResult.success || !checkResult.allCompleted) {
-                console.log('Nem todos os avaliadores completaram ainda. Marcando apenas este avaliador como completo.');
+            let resultData = checkResult;
+            if (Array.isArray(checkResult) && checkResult.length > 0) {
+                resultData = checkResult[0];
+                console.log('checkResult é array, usando primeiro elemento:', resultData);
+            }
 
-                const partialPayload = {
-                    operation: 'markEvaluatorCompleted',
-                    avaliador_id: avaliador_id,
+            const allCompleted = resultData.allCompleted === 'true' || resultData.allCompleted === true;
+            console.log('allCompleted:', allCompleted);
+
+            if (allCompleted) {
+                console.log('=== Todos completaram! Finalizando avaliação ===');
+                const finalizePayload = {
+                    operation: 'finalizeEvaluation',
                     avaliacao_id: avaliacao_id,
-                    avaliados_ids: avaliados_ids || [],
                     status: 'completed',
-                    completed_at: now,
                     updated_at: now
                 };
 
-                return await makeRequest(partialPayload);
+                const finalizeResult = await makeRequest(finalizePayload);
+                console.log('finalizeResult:', finalizeResult);
+
+                pendingEvaluationsCache.invalidateCache(avaliacao_id);
+
+                return {
+                    success: true,
+                    message: 'Avaliação finalizada com sucesso! Todos os avaliadores completaram.',
+                    allCompleted: true,
+                    data: finalizeResult
+                };
+            } else {
+                console.log('=== Nem todos completaram ainda ===');
+                
+                // Invalida cache
+                pendingEvaluationsCache.invalidateCache(avaliacao_id);
+
+                return {
+                    success: true,
+                    message: 'Sua avaliação foi salva com sucesso! Aguardando outros avaliadores.',
+                    allCompleted: false,
+                    data: markResult
+                };
             }
 
-            console.log('Todos os avaliadores completaram! Finalizando avaliação completa.');
-            const payload = {
-                operation: 'submitEvaluation',
-                status: 'completed',
-                completed_at: now,
-                updated_at: now,
-                avaliador_id: avaliador_id,
-                avaliacao_id: avaliacao_id,
-                avaliados_ids: avaliados_ids || []
-            };
-
-            return await makeRequest(payload);
-
         } catch (error) {
-            console.error('Erro ao verificar status dos avaliadores:', error);
-            const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-            const payload = {
-                operation: 'submitEvaluation',
-                status: 'completed',
-                completed_at: now,
-                updated_at: now,
-                avaliador_id: avaliador_id,
-                avaliacao_id: avaliacao_id,
-                avaliados_ids: avaliados_ids || []
-            };
-
-            return await makeRequest(payload);
+            console.error('Erro no submitEvaluation:', error);
+            throw error;
         }
     };
 

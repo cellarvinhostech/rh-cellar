@@ -4,9 +4,9 @@ import { useAuth } from '@/hooks/use-auth';
 import type { PendingEvaluation, EvaluatorStatuses } from '@/types/evaluations';
 
 /**
- * Hook para avaliações pendentes com cache avançado
+ * Hook otimizado para avaliações pendentes com cache
  */
-export const usePendingEvaluations = () => {
+export const usePendingEvaluationsOptimized = () => {
     const [pendingEvaluations, setPendingEvaluations] = useState<PendingEvaluation[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -70,9 +70,9 @@ export const usePendingEvaluations = () => {
 };
 
 /**
- * Hook para status dos avaliadores com cache avançado
+ * Hook otimizado para status dos avaliadores com cache
  */
-export const useEvaluatorStatuses = (evaluations: PendingEvaluation[]) => {
+export const useEvaluatorStatusesOptimized = (evaluations: PendingEvaluation[]) => {
     const { authState } = useAuth();
     const [evaluatorStatuses, setEvaluatorStatuses] = useState<EvaluatorStatuses>({});
     const [loading, setLoading] = useState(false);

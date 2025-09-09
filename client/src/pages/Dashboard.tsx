@@ -25,7 +25,7 @@ import {
 import { MainLayout } from "@/components/layout/MainLayout";
 import { EvaluationChart } from "@/components/analytics/EvaluationChart";
 import { AnalyticsCard } from "@/components/analytics/AnalyticsCard";
-import { PendingEvaluationsNotification } from "@/components/analytics/PendingEvaluationsNotification";
+import PendingEvaluationsNotification from "@/components/analytics/PendingEvaluationsNotification";
 import { useHRData } from "@/hooks/use-hr-data";
 import { useAuth } from "@/hooks/use-auth";
 import { usePendingEvaluations } from "@/hooks/use-pending-evaluations";
@@ -36,8 +36,8 @@ export default function Dashboard() {
   const { stats, activities, departments, getEmployeesWithDetails } =
     useHRData();
   const { authState } = useAuth();
-  const { pendingEvaluations, loading, error, pendingCount } =
-    usePendingEvaluations();
+  const { pendingEvaluations, loading, error } = usePendingEvaluations();
+  const pendingCount = pendingEvaluations.length;
   const [activeTab, setActiveTab] = useState("timeline");
   const [visiblePosts, setVisiblePosts] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
