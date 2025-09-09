@@ -67,29 +67,66 @@ export class PendingEvaluationsCache {
 
         try {
             const result = await authenticatedFetchWithCache<any>(url, options, {
-                ttl: 2 * 60 * 1000, // 2 minutos para avaliações pendentes
+                ttl: 2 * 60 * 1000,
                 cacheKey: this.cacheKey
             });
 
-            // Normaliza a resposta
+            let evaluationsData = [];
             if (Array.isArray(result)) {
-                return result;
+                evaluationsData = result;
             } else if (result?.success && Array.isArray(result.data)) {
-                return result.data;
+                evaluationsData = result.data;
             } else if (result?.data) {
                 if (typeof result.data === 'string') {
                     try {
                         const parsedData = JSON.parse(result.data);
-                        return Array.isArray(parsedData) ? parsedData : [parsedData];
+                        evaluationsData = Array.isArray(parsedData) ? parsedData : [parsedData];
                     } catch {
-                        return [result.data];
+                        evaluationsData = [result.data];
                     }
                 } else {
-                    return Array.isArray(result.data) ? result.data : [result.data];
+                    evaluationsData = Array.isArray(result.data) ? result.data : [result.data];
                 }
             }
 
-            return [];
+            const userDataStr = localStorage.getItem(API_CONFIG.STORAGE.USER_KEY);
+            if (!userDataStr) {
+                console.warn('Usuário não está logado');
+                return [];
+            }
+
+            let userId: string;
+            try {
+                const userData = JSON.parse(userDataStr);
+                userId = userData.id;
+            } catch (error) {
+                console.error('Erro ao obter dados do usuário:', error);
+                return [];
+            }
+
+            const evaluationChecks = evaluationsData.map(async (evaluation: any) => {
+                try {
+                    const evaluationData = await this.getEvaluationDetails(evaluation.id);
+                    if (evaluationData && userId) {
+                        const evaluators = evaluationData.avaliadores?.map((item: any) => item.json) || [];
+                        const isUserEvaluator = evaluators.some((evaluator: any) =>
+                            evaluator.user_id === userId
+                        );
+                        
+                        return isUserEvaluator ? evaluation : null;
+                    }
+                    return null;
+                } catch (error) {
+                    console.error(`Erro ao verificar se usuário é avaliador da avaliação ${evaluation.id}:`, error);
+                    return null;
+                }
+            });
+
+            const evaluationResults = await Promise.all(evaluationChecks);
+            
+            const filteredEvaluations = evaluationResults.filter(evaluation => evaluation !== null);
+
+            return filteredEvaluations;
         } catch (error) {
             console.error('Erro ao buscar avaliações pendentes:', error);
             return [];
@@ -160,12 +197,10 @@ export class PendingEvaluationsCache {
      */
     invalidateCache(evaluationId?: string): void {
         if (evaluationId) {
-            // Invalida cache específico da avaliação
             apiCache.invalidatePattern(`evaluation-details-${evaluationId}`);
             apiCache.invalidatePattern(`${this.statusCachePrefix}-${evaluationId}`);
         }
 
-        // Invalida lista de avaliações pendentes
         apiCache.invalidate(this.cacheKey);
     }
 
@@ -197,5 +232,4 @@ export class PendingEvaluationsCache {
     }
 }
 
-// Instância singleton
 export const pendingEvaluationsCache = PendingEvaluationsCache.getInstance();

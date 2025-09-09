@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { authenticatedFetch } from '@/utils/api';
 import { API_CONFIG } from '@/utils/constants';
 import { useAuth } from '@/hooks/use-auth';
+import { useEvaluationsAPI } from '@/hooks/use-evaluations-api';
 
 export interface PendingEvaluation {
     id: string;
@@ -26,6 +27,7 @@ export const usePendingEvaluationsApi = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { authState } = useAuth();
+    const { fetchEvaluationById } = useEvaluationsAPI();
 
     const fetchPendingEvaluations = async () => {
         if (!authState?.user?.id) {
@@ -88,7 +90,26 @@ export const usePendingEvaluationsApi = () => {
                 }
             }
 
-            setPendingEvaluations(evaluationsData);
+            const filteredEvaluations = [];
+            for (const evaluation of evaluationsData) {
+                try {
+                    const evaluationData = await fetchEvaluationById(evaluation.id);
+                    if (evaluationData && authState?.user?.id) {
+                        const evaluators = evaluationData.avaliadores?.map(item => item.json) || [];
+                        const isUserEvaluator = evaluators.some(evaluator =>
+                            evaluator.user_id === authState.user!.id
+                        );
+                        
+                        if (isUserEvaluator) {
+                            filteredEvaluations.push(evaluation);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Erro ao verificar se usuário é avaliador da avaliação ${evaluation.id}:`, error);
+                }
+            }
+
+            setPendingEvaluations(filteredEvaluations);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
             setError(errorMessage);

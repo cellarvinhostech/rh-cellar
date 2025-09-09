@@ -4,6 +4,7 @@ import { API_CONFIG } from '@/utils/constants';
 import { useAuth } from '@/hooks/use-auth';
 
 const AVALIADOS_API_URL = 'https://integra.cellarvinhos.com/webhook/ea02db38-ee04-4531-8106-e640db7a397b';
+const EVALUATORS_API_URL = 'https://integra.cellarvinhos.com/webhook/e8b30622-565e-4c2e-a51b-b589ebd2de5a';
 
 export interface Avaliado {
     id: string;
@@ -14,7 +15,6 @@ export interface Avaliado {
     updated_by: string;
     created_at: string;
     updated_at: string;
-    // Dados do usuário (preenchidos após buscar)
     name?: string;
     department?: string;
 }export const useAvaliados = (evaluationId?: string, avaliadorId?: string) => {
@@ -24,8 +24,8 @@ export interface Avaliado {
     const { authState } = useAuth();
 
     const fetchAvaliados = async () => {
-        if (!authState?.user?.id) {
-            setError('Usuário não autenticado');
+        if (!authState?.user?.id || !evaluationId) {
+            setError('Usuário não autenticado ou avaliação não especificada');
             return;
         }
 
@@ -33,16 +33,50 @@ export interface Avaliado {
         setError(null);
 
         try {
-            const requestBody = {
-                operation: 'readAll'
-            };
+            const evaluatorsResponse = await authenticatedFetch(EVALUATORS_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    operation: 'readAll'
+                }),
+            });
+
+            if (!evaluatorsResponse.ok) {
+                throw new Error(`Erro na requisição de avaliadores: ${evaluatorsResponse.status}`);
+            }
+
+            const evaluatorsData = await evaluatorsResponse.json();
+            let evaluatorsList = [];
+            
+            if (Array.isArray(evaluatorsData)) {
+                evaluatorsList = evaluatorsData;
+            } else if (evaluatorsData.success && Array.isArray(evaluatorsData.data)) {
+                evaluatorsList = evaluatorsData.data;
+            }
+
+            const myEvaluatorRelations = evaluatorsList.filter((rel: any) => 
+                rel.user_id === authState.user!.id && 
+                rel.avaliacao_id === evaluationId
+            );
+
+            if (myEvaluatorRelations.length === 0) {
+                console.log('Usuário não é avaliador nesta avaliação');
+                setAvaliados([]);
+                return;
+            }
+
+            const avaliadosIds = myEvaluatorRelations.map((rel: any) => rel.avaliado_id);
 
             const avaliadosResponse = await authenticatedFetch(AVALIADOS_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(requestBody),
+                body: JSON.stringify({
+                    operation: 'readAll'
+                }),
             });
 
             if (!avaliadosResponse.ok) {
@@ -59,7 +93,11 @@ export interface Avaliado {
             }
 
             if (dataArray.length > 0) {
-                const filteredData = dataArray.filter((item: any) => item.avaliacao_id === evaluationId);
+                const filteredData = dataArray.filter((item: any) => 
+                    item.avaliacao_id === evaluationId && 
+                    avaliadosIds.includes(item.id)
+                );
+
 
                 const usersResponse = await authenticatedFetch(
                     `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.EMPLOYEES}`,
